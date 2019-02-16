@@ -1,62 +1,61 @@
 <div layout="column" layout-padding ng-cloak>
 
-    <!-- items list -->
-    <md-table-container>
-        <table md-table>
-        <thead md-head md-order="columnOrder">
-            <tr md-row>
-                <th md-column md-order-by="name">Name</th>
-                <th md-column md-order-by="gpio">Gpio</th>
-                <th md-column md-order-by="pin">Pin</th>
-                <th md-column md-order-by="mode">Mode</th>
-                <th md-column>State saved</th>
-                <th md-column>Reverted</th>
-                <th md-column>Status</th>
-                <th md-column>Actions</th>
-            </tr>
-        </thead>
-        <tbody md-body>
-            <tr md-row md-auto-select ng-repeat="device in gpiosCtl.devices | filterDeviceByService:'gpios' | orderBy:columnOrder">
-                <td md-cell>{{device.name}}</td>
-                <td md-cell>{{device.gpio}}</td>
-                <td md-cell>{{device.pin}}</td>
-                <td md-cell>{{device.mode==='input'?'Input':'Output'}}</td>
-                <td md-cell>
-                    <md-checkbox ng-disabled="true" ng-model="device.keep" aria-label="keep"></md-checkbox>
-                </td>
-                <td md-cell>
-                    <md-checkbox ng-disabled="true" ng-model="device.reverted" aria-label="reverted"></md-checkbox>
-                </td>
-                <td md-cell>
-                    <md-button ng-if="!device.on" class="md-icon-button md-primary cursor-default" aria-label="Off">
-                        <span md-svg-icon="circle"></span>
-                    </md-button>
-                    <md-button ng-if="device.on" class="md-icon-button md-accent cursor-default" aria-label="On">
-                        <span md-svg-icon="circle"></span>
-                    </md-button>
-                </td>
-                <td md-cell>
-                    <div ng-if="device.owner='gpios'">
-                        <md-button class="md-icon-button" ng-click="gpiosCtl.openUpdateDialog(device)" aria-label="Edit">
-                            <md-tooltip md-direction="bottom">Edit gpio</md-tooltip>
+    <md-list>
+        <md-subheader class="md-no-sticky">Configured gpios</md-subheader>
+
+        <!-- no item -->
+        <md-list-item ng-if="(gpiosCtl.devices | filterDeviceByService:'gpios').length===0">
+            <p>No gpio configured</p>
+        </md-list-item>
+
+        <!-- items list -->
+        <md-list-item ng-repeat="device in gpiosCtl.devices | filterDeviceByService:'gpios'" class="md-2-line">
+            <md-icon md-svg-icon="video-input-component"></md-icon>
+            <div class="md-list-item-text">
+                <h3>{{device.name}}</h3>
+                <p>
+                    Gpio:{{device.gpio}} - 
+                    Pin:{{device.pin}} - 
+                    Mode:{{device.mode==='input' ? 'Input' : 'Output'}} - 
+                    Save state:{{device.inverted ? 'Yes' : 'No'}} - 
+                    Inverted state:{{device.inverted ? 'Yes' : 'No'}}
+                </p>
+            </div>
+            <div class="md-secondary">
+                <md-button ng-if="!device.on" class="md-icon-button md-primary default-cursor" md-no-ink aria-label="Off">
+                    <md-icon md-svg-icon="circle"></md-icon>
+                </md-button>
+                <md-button ng-if="device.on" class="md-icon-button md-accent default-cursor" md-no-ink aria-label="On">
+                    <md-icon md-svg-icon="circle"></md-icon>
+                </md-button>
+                <span ng-if="device.on">On</span>
+                <span ng-if="!device.on">Off</span>
+            </div>
+            <md-button class="md-secondary md-icon-button" aria-label="readonly" ng-if="device.owner!=='gpios'">
+                <md-tooltip md-direction="bottom">Gpio can only be modified by module which added it</md-tooltip>
+                <md-icon md-svg-icon="lock-outline"></md-icon>
+            </md-button>
+            <md-menu class="md-secondary" ng-if="device.owner==='gpios'">
+                <md-button class="md-icon-button" ng-click="gpiosCtl.openItemMenu($mdMenu, $event, device)">
+                    <md-icon md-svg-icon="dots-vertical"></md-icon>
+                </md-button>
+                <md-menu-content width="3">
+                    <md-menu-item>
+                        <md-button ng-click="gpiosCtl.openUpdateDialog(device)" aria-label="Edit">
                             <md-icon md-svg-icon="pencil"></md-icon>
+                            Edit Gpio
                         </md-button>
-                        <md-button class="md-icon-button" ng-click="gpiosCtl.openDeleteDialog(device)" aria-label="Delete">
-                            <md-tooltip md-direction="bottom">Delete gpio</md-tooltip>
+                    </md-menu-item>
+                    <md-menu-item>
+                        <md-button ng-click="gpiosCtl.openDeleteDialog(device)" aria-label="Delete">
                             <md-icon md-svg-icon="delete"></md-icon>
+                            Delete Gpio
                         </md-button>
-                    </div>
-                    <div ng-if="device.owner!='gpios'">
-                        <md-button class="md-icon-button" aria-label="readonly">
-                            <md-tooltip md-direction="bottom">Gpio can only be modified by module which added it</md-tooltip>
-                            <md-icon md-svg-icon="lock-outline"></md-icon>
-                        </md-button>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-        </table>
-    </md-table-container>
+                    </md-menu-item>
+                </md-menu-content>
+            </md-menu>
+        </md-list-item>
+    </md-list>
 
 </div>
 

@@ -11,7 +11,7 @@ var widgetGpioDirective = function() {
 
     return {
         restrict: 'EA',
-        templateUrl: 'js/dashboard/widgets/gpios/gpio.html',
+        templateUrl: 'gpio.widget.html',
         replace: true,
         scope: {
             'device': '='

@@ -66,6 +66,15 @@ class GpioInputWatcher(Thread):
         """
         last_level = None
         time_on = 0
+
+        #send current level
+        if self.level==GPIO.LOW:
+            if self.off_callback:
+                self.off_callback(self.uuid, 0)
+        else:
+            if self.on_callback:
+                self.on_callback(self.uuid)
+
         try:
             while self.continu:
                 #get level
@@ -142,14 +151,15 @@ class Gpios(RaspIotModule):
     MODULE_VERSION = u'1.0.0'
     MODULE_PRICE = 0
     MODULE_DEPS = []
-    MODULE_DESCRIPTION = u'Gives you access to raspberry pins to configure your inputs/ouputs as you wish.'
-    MODULE_LOCKED = False
-    MODULE_TAGS = [u'gpios', u'sensors']
+    MODULE_DESCRIPTION = u'Configure your raspberry pins'
+    MODULE_LONGDESCRIPTION = u'Gives you access to raspberry pins to configure your inputs/ouputs as you wish quickly and easily.'
+    MODULE_TAGS = [u'gpios', u'inputs', u'outputs']
+    MODULE_CATEGORY = u'DRIVER'
     MODULE_COUNTRY = None
-    MODULE_URLINFO = None
-    MODULE_URLHELP = None
+    MODULE_URLINFO = u'https://github.com/tangb/cleepmod-gpios'
+    MODULE_URLHELP = u'https://github.com/tangb/cleepmod-gpios/wiki'
     MODULE_URLSITE = None
-    MODULE_URLBUGS = None
+    MODULE_URLBUGS = u'https://github.com/tangb/cleepmod-gpios/issues'
 
     MODULE_CONFIG_FILE = u'gpios.conf'
 
@@ -385,16 +395,16 @@ class Gpios(RaspIotModule):
                     self.gpiosGpioOff.send(params={u'gpio':u'gpio', u'init':True, u'duration':0}, device_id=device[u'gpio'])
 
             elif device[u'mode']==self.MODE_INPUT:
-                if not device[u'reverted']:
+                if not device[u'inverted']:
                     self.logger.debug(u'Configure gpio %s (pin %s) as INPUT' % (device[u'gpio'], device[u'pin']))
                 else:
-                    self.logger.debug(u'Configure gpio %s (pin %s) as INPUT reverted' % (device[u'gpio'], device[u'pin']))
+                    self.logger.debug(u'Configure gpio %s (pin %s) as INPUT inverted' % (device[u'gpio'], device[u'pin']))
 
                 #configure it
                 GPIO.setup(device[u'pin'], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
                 #and launch input watcher
-                if not device[u'reverted']:
+                if not device[u'inverted']:
                     w = GpioInputWatcher(device[u'pin'], device[u'uuid'], self.__input_on_callback, self.__input_off_callback, GPIO.LOW)
                 else:
                     w = GpioInputWatcher(device[u'pin'], device[u'uuid'], self.__input_on_callback, self.__input_off_callback, GPIO.HIGH)
@@ -601,7 +611,7 @@ class Gpios(RaspIotModule):
                 u'gpio': gpio,
                 u'keep': False,
                 u'on': False,
-                u'reverted': False,
+                u'inverted': False,
                 u'owner': command_sender,
                 u'type': u'gpio',
                 u'subtype': self.MODE_RESERVED
@@ -635,7 +645,7 @@ class Gpios(RaspIotModule):
 
         return False
 
-    def add_gpio(self, name, gpio, mode, keep, reverted, command_sender):
+    def add_gpio(self, name, gpio, mode, keep, inverted, command_sender):
         """
         Add new gpio
 
@@ -644,7 +654,7 @@ class Gpios(RaspIotModule):
             gpio: gpio value
             mode: mode (input or output)
             keep: keep state when restarting
-            reverted: if true on callback will be triggered on gpio low level instead of high level
+            inverted: if true a callback will be triggered on gpio low level instead of high level
             command_sender: command request sender (used to set gpio in readonly mode)
 
         Returns:
@@ -683,7 +693,7 @@ class Gpios(RaspIotModule):
                 u'gpio': gpio,
                 u'keep': keep,
                 u'on': False,
-                u'reverted': reverted,
+                u'inverted': inverted,
                 u'owner': command_sender,
                 u'type': 'gpio',
                 u'subtype': mode
@@ -735,7 +745,7 @@ class Gpios(RaspIotModule):
 
         return False
 
-    def update_gpio(self, uuid, name, keep, reverted, command_sender):
+    def update_gpio(self, uuid, name, keep, inverted, command_sender):
         """
         Update gpio
 
@@ -743,7 +753,7 @@ class Gpios(RaspIotModule):
             uuid (string): device identifier
             name (string): gpio name
             keep (bool): keep status flag
-            reverted (bool): reverted flag
+            inverted (bool): inverted flag
             command_sender (string): command sender
 
         Returns:
@@ -768,7 +778,7 @@ class Gpios(RaspIotModule):
             #device is valid, update entry
             device[u'name'] = name
             device[u'keep'] = keep
-            device[u'reverted'] = reverted
+            device[u'inverted'] = inverted
             if self._update_device(uuid, device)==None:
                 raise CommandError(u'Unable to update device')
 

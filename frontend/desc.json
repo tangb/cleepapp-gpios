@@ -2,8 +2,9 @@
     "icon": "video-input-component",
     "system": {
         "widgets": {
-            "js": ["gpio.widget.js"],
-            "html": ["gpio.widget.html"]
+            "js": ["gpio.widget.js", "gpiosPins/gpiosPins.js"],
+            "html": ["gpio.widget.html", "gpiosPins/gpiosPins.html"],
+            "css": ["gpiosPins/gpiosPins.css"]
         },
         "services": ["gpios.service.js"]
     },

@@ -4,6 +4,7 @@
  */
 var gpiosService = function($q, $rootScope, rpcService, raspiotService) {
     var self = this;
+    self.cachedPinsDescription = null;
     
     /**
      * Init module devices
@@ -40,28 +41,49 @@ var gpiosService = function($q, $rootScope, rpcService, raspiotService) {
      * Return list of pins
      */
     self.getPinsDescription = function() {
-        return rpcService.sendCommand('get_pins_description', 'gpios');
+        var deferred = $q.defer();
+
+        if( self.cachedPinsDescription ) {
+            deferred.resolve(self.cachedPinsDescription);
+            return deferred.promise;
+        }
+
+        return rpcService.sendCommand('get_pins_description', 'gpios')
+            .then(function(resp) {
+                self.cachedPinsDescription = resp;
+                deferred.resolve(self.cachedPinsDescription);
+                return deferred.promise;
+            });
     };
 
     /**
      * Add new gpio
      */
-    self.addGpio = function(name, gpio, mode, keep, reverted) {
-        return rpcService.sendCommand('add_gpio', 'gpios', {'name':name, 'gpio':gpio, 'mode':mode, 'keep':keep, 'reverted':reverted});
+    self.addGpio = function(name, gpio, mode, keep, inverted) {
+        return rpcService.sendCommand('add_gpio', 'gpios', {'name':name, 'gpio':gpio, 'mode':mode, 'keep':keep, 'inverted':inverted})
+            .then(function(resp) {
+                return $q.all(raspiotService.reloadModuleConfig('gpios'), raspiotService.reloadDevices());
+            })
     };
 
     /**
      * Delete gpio
      */
     self.deleteGpio = function(uuid) {
-        return rpcService.sendCommand('delete_gpio', 'gpios', {'uuid':uuid});
+        return rpcService.sendCommand('delete_gpio', 'gpios', {'uuid':uuid})
+            .then(function(resp) {
+                return $q.all(raspiotService.reloadModuleConfig('gpios'), raspiotService.reloadDevices());
+            });
     };
 
     /**
      * Update device
      */
-    self.updateGpio = function(uuid, name, keep, reverted) {
-        return rpcService.sendCommand('update_gpio', 'gpios', {'uuid':uuid, 'name':name, 'keep':keep, 'reverted':reverted});
+    self.updateGpio = function(uuid, name, keep, inverted) {
+        return rpcService.sendCommand('update_gpio', 'gpios', {'uuid':uuid, 'name':name, 'keep':keep, 'inverted':inverted})
+            .then(function(resp) {
+                return $q.all(raspiotService.reloadModuleConfig('gpios'), raspiotService.reloadDevices());
+            });
     };
 
     /**

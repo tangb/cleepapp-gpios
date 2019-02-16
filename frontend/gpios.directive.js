@@ -11,7 +11,7 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
         self.name = '';
         self.mode = 'input';
         self.keep = false;
-        self.reverted = false;
+        self.inverted = false;
         self.updateDevice = false;
         self.selectedGpios = [{gpio:null, 'label':'wire'}];
 
@@ -23,8 +23,15 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
             self.selectedGpios = [{gpio:null, 'label':'wire'}];
             self.mode = 'input';
             self.keep = false;
-            self.reverted = false;
+            self.inverted = false;
         };
+
+        /**
+         * Open item menu
+         */
+        self.openItemMenu = function(mdMenu, e, device) {
+            mdMenu.open(e);
+        }
 
         /**
          * Close dialog
@@ -69,10 +76,7 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
             self.updateDevice = false;
             self._openDialog()
                 .then(function() {
-                    return gpiosService.addGpio(self.name, self.selectedGpios[0].gpio, self.mode, self.keep, self.reverted);
-                })
-                .then(function() {
-                    return raspiotService.reloadDevices();
+                    return gpiosService.addGpio(self.name, self.selectedGpios[0].gpio, self.mode, self.keep, self.inverted);
                 })
                 .then(function() {
                     toast.success('Gpio added');
@@ -96,10 +100,7 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
             self.updateDevice = true;
             self._openDialog()
                 .then(function() {
-                    return gpiosService.updateGpio(device.uuid, self.name, self.keep, self.reverted);
-                })
-                .then(function(resp) {
-                    return raspiotService.reloadDevices();
+                    return gpiosService.updateGpio(device.uuid, self.name, self.keep, self.inverted);
                 })
                 .then(function() {
                     toast.success('Gpio updated');
@@ -116,9 +117,6 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
             confirm.open('Delete gpio?', null, 'Delete')
                 .then(function() {
                     return gpiosService.deleteGpio(device.uuid);
-                })
-                .then(function() {
-                    return raspiotService.reloadDevices();
                 })
                 .then(function() {
                     toast.success('Gpio deleted');
@@ -146,7 +144,6 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
 
     var gpiosConfigLink = function(scope, element, attrs, controller) {
         controller.init();
-
     };
 
     return {
