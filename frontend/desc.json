@@ -9,7 +9,7 @@
         "services": ["gpios.service.js"]
     },
     "config": {
-        "js": ["gpios.directive.js"],
-        "html": ["gpios.directive.html", "addGpio.directive.html"]
+        "js": ["gpios.config.js"],
+        "html": ["gpios.config.html", "addGpio.config.html"]
     }
 }
