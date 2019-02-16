@@ -95,6 +95,7 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
             self.selectedGpios = [{gpio:device.gpio, label:'gpio'}];
             self.mode = device.mode;
             self.keep = device.keep;
+            self.inverted = device.inverted;
 
             //open dialog
             self.updateDevice = true;
