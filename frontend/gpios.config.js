@@ -27,13 +27,6 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
         };
 
         /**
-         * Open item menu
-         */
-        self.openItemMenu = function(mdMenu, e, device) {
-            mdMenu.open(e);
-        }
-
-        /**
          * Close dialog
          */
         self.closeDialog = function() {

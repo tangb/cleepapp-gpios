@@ -1,7 +1,7 @@
 <div layout="column" layout-padding ng-cloak>
 
     <div>
-        <span ng-if="!pinsCtl.readonly && pinsCtl.countPins!==pinsCtl.maxPins" class="board-text">Click on pin where you connect {{pinsCtl.currentLabel}}:</span>
+        <span ng-if="!pinsCtl.readonly && pinsCtl.countPins!==pinsCtl.maxPins" class="board-text">Click on the pin on which you have connected {{pinsCtl.currentLabel}}:</span>
         <span ng-if="!pinsCtl.readonly && pinsCtl.countPins===pinsCtl.maxPins" class="board-text">All pins are configured</span>
         <span ng-if="pinsCtl.readonly" class="board-text board-text-readonly">Readonly: update disabled</span>
     </div>

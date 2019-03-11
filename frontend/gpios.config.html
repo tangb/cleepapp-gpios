@@ -21,7 +21,7 @@
                     Inverted state:{{device.inverted ? 'Yes' : 'No'}}
                 </p>
             </div>
-            <div class="md-secondary">
+            <div class="md-secondary md-secondary-rpadding">
                 <md-button ng-if="!device.on" class="md-icon-button md-primary default-cursor" md-no-ink aria-label="Off">
                     <md-icon md-svg-icon="circle"></md-icon>
                 </md-button>
@@ -36,7 +36,7 @@
                 <md-icon md-svg-icon="lock-outline"></md-icon>
             </md-button>
             <md-menu class="md-secondary" ng-if="device.owner==='gpios'">
-                <md-button class="md-icon-button" ng-click="gpiosCtl.openItemMenu($mdMenu, $event, device)">
+                <md-button class="md-icon-button">
                     <md-icon md-svg-icon="dots-vertical"></md-icon>
                 </md-button>
                 <md-menu-content width="3">
