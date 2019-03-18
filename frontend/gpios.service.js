@@ -4,7 +4,6 @@
  */
 var gpiosService = function($q, $rootScope, rpcService, raspiotService) {
     var self = this;
-    self.cachedPinsDescription = null;
     
     /**
      * Init module devices
@@ -38,22 +37,10 @@ var gpiosService = function($q, $rootScope, rpcService, raspiotService) {
     };
 
     /**
-     * Return list of pins
+     * Return gpios usage
      */
-    self.getPinsDescription = function() {
-        var deferred = $q.defer();
-
-        if( self.cachedPinsDescription ) {
-            deferred.resolve(self.cachedPinsDescription);
-            return deferred.promise;
-        }
-
-        return rpcService.sendCommand('get_pins_description', 'gpios')
-            .then(function(resp) {
-                self.cachedPinsDescription = resp;
-                deferred.resolve(self.cachedPinsDescription);
-                return deferred.promise;
-            });
+    self.getPinsUsage = function() {
+        return rpcService.sendCommand('get_pins_usage', 'gpios');
     };
 
     /**

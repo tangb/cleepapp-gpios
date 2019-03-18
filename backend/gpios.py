@@ -462,36 +462,14 @@ class Gpios(RaspIotModule):
         """
         config = {}
 
-        #merge available gpios with assigned ones
-        gpios = {}
-        all_gpios = self.get_raspi_gpios()
-        devices = self.get_module_devices()
-        for gpio in all_gpios:
-            #get gpio assigned infos
-            assigned = False
-            owner = None
-            for uuid in devices:
-                if devices[uuid][u'gpio']==gpio:
-                    assigned = True
-                    owner = devices[uuid][u'owner']
-                    break
-
-            #add new entry
-            gpios[gpio] = {
-                u'gpio': gpio,
-                u'pin': all_gpios[gpio],
-                u'assigned': assigned,
-                u'owner': owner
-            }
-        config[u'gpios'] = gpios
         config[u'revision'] = GPIO.RPI_INFO[u'P1_REVISION']
         config[u'pinsnumber'] = self.get_pins_number()
 
         return config
 
-    def get_pins_description(self):
+    def get_pins_usage(self):
         """
-        Return pins description
+        Return pins usage
 
         Results:
             dict: dict of pins 
@@ -499,16 +477,48 @@ class Gpios(RaspIotModule):
                     <pin number (int)>:<gpio name|5v|3.3v|gnd|dnc(string)>
                 }
         """
+        output = {}
+
+        #get pins descriptions according to raspberry pi revision
+        all_pins = {}
         rev = GPIO.RPI_INFO['P1_REVISION']
-
         if rev==1:
-            return self.PINS_REV1
+            all_pins = self.PINS_REV1
         elif rev==2:
-            return self.PINS_REV2
+            all_pins = self.PINS_REV2
         elif rev==3:
-            return self.PINS_REV3
+            all_pins = self.PINS_REV3
+        self.logger.debug(u'all_pins %s' % all_pins)
 
-        return {}
+        #fill pins usage
+        all_gpios = self.get_raspi_gpios()
+        self.logger.debug(u'all_gpios %s' % all_gpios)
+        devices = self.get_module_devices()
+        for pin_number in all_pins:
+            #default pin data
+            output[pin_number] = {
+                u'label': all_pins[pin_number],
+                u'gpio': None
+            }
+
+            #fill gpio data
+            if all_pins[pin_number] in all_gpios:
+                gpio_name = all_pins[pin_number]
+                gpio = all_gpios[gpio_name]
+                assigned = False
+                owner = None
+                for uuid in devices:
+                    if devices[uuid][u'gpio']==gpio_name:
+                        assigned = True
+                        owner = devices[uuid][u'owner']
+                        break
+
+                output[pin_number][u'gpio'] = {
+                    u'assigned': assigned,
+                    u'owner': owner
+                }
+
+        return output
 
     def get_assigned_gpios(self):
         """

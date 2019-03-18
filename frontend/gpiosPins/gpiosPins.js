@@ -154,32 +154,32 @@ var gpiosPinsDirective = function(raspiotService, gpiosService, toast, confirm) 
          * @param pinDesc: pin description (gpio name if pin is a gpio)
          * @param gpios: list of raspberry pi gpios
          */
-        self.__fillOdds = function(pin, pinDesc, gpios)
+        self.__fillOdds = function(pinNumber, pinData)
         {
-            if( pinDesc.startsWith('GPIO') )
+            if( pinData.label.startsWith('GPIO') )
             {
                 //save gpio configuration
-                self.odds.push(self.__getPinData(pin, true, false, false, false, false, gpios[pinDesc].assigned, gpios[pinDesc].owner, pinDesc));
+                self.odds.push(self.__getPinData(pinNumber, true, false, false, false, false, pinData.gpio.assigned, pinData.gpio.owner, pinData.label));
             }
-            else if( pinDesc==='5V' )
+            else if( pinData.label==='5V' )
             {
                 //save 5v pin
-                self.odds.push(self.__getPinData(pin, false, true, false, false, false, null, null, null));
+                self.odds.push(self.__getPinData(pinNumber, false, true, false, false, false, null, null, null));
             }
-            else if( pinDesc==='3.3V' )
+            else if( pinData.label==='3.3V' )
             {
                 //save 3.3v pin
-                self.odds.push(self.__getPinData(pin, false, false, true, false, false, null, null, null));
+                self.odds.push(self.__getPinData(pinNumber, false, false, true, false, false, null, null, null));
             }
-            else if( pinDesc==='DNC' )
+            else if( pinData.label==='DNC' )
             {
                 //save do not connect pin
-                self.odds.push(self.__getPinData(pin, false, false, false, true, false, null, null, null));
+                self.odds.push(self.__getPinData(pinNumber, false, false, false, true, false, null, null, null));
             }
-            else if( pinDesc==='GND' )
+            else if( pinData.label==='GND' )
             {
                 //save gnd pin
-                self.odds.push(self.__getPinData(pin, false, false, false, false, true, null, null, null));
+                self.odds.push(self.__getPinData(pinNumber, false, false, false, false, true, null, null, null));
             }
         };
 
@@ -189,32 +189,32 @@ var gpiosPinsDirective = function(raspiotService, gpiosService, toast, confirm) 
          * @param pinDesc: pin description (gpio name if pin is a gpio)
          * @param gpios: list of raspberry pi gpios
          */
-        self.__fillEvens = function(pin, pinDesc, gpios)
+        self.__fillEvens = function(pinNumber, pinData)
         {
-            if( pinDesc.startsWith('GPIO') )
+            if( pinData.label.startsWith('GPIO') )
             {
                 //save gpio configuration
-                self.evens.push(self.__getPinData(pin, true, false, false, false, false, gpios[pinDesc].assigned, gpios[pinDesc].owner, pinDesc));
+                self.evens.push(self.__getPinData(pinNumber, true, false, false, false, false, pinData.gpio.assigned, pinData.gpio.owner, pinData.label));
             }
-            else if( pinDesc==='5V' )
+            else if( pinData.label==='5V' )
             {
                 //save 5v pin
-                self.evens.push(self.__getPinData(pin, false, true, false, false, false, null, null, null));
+                self.evens.push(self.__getPinData(pinNumber, false, true, false, false, false, null, null, null));
             }   
-            else if( pinDesc==='3.3V' )
+            else if( pinData.label==='3.3V' )
             {
                 //save 3.3v pin
-                self.evens.push(self.__getPinData(pin, false, false, true, false, false, null, null, null));
+                self.evens.push(self.__getPinData(pinNumber, false, false, true, false, false, null, null, null));
             }
-            else if( pinDesc==='DNC' )
+            else if( pinData.label==='DNC' )
             {
                 //save do not connect pin
-                self.evens.push(self.__getPinData(pin, false, false, false, true, false, null, null, null));
+                self.evens.push(self.__getPinData(pinNumber, false, false, false, true, false, null, null, null));
             }
-            else if( pinDesc==='GND' )
+            else if( pinData.label==='GND' )
             {
                 //save gnd pin
-                self.evens.push(self.__getPinData(pin, false, false, false, false, true, null, null, null));
+                self.evens.push(self.__getPinData(pinNumber, false, false, false, false, true, null, null, null));
             }
         };
 
@@ -267,28 +267,17 @@ var gpiosPinsDirective = function(raspiotService, gpiosService, toast, confirm) 
             self.searchNextGpioToConfigure();
 
             //fill pins
-            var gpios = null;
-            raspiotService.getModuleConfig('gpios')
-                .then(function(config) {
-                    gpios = config.gpios;
-                    console.log(gpios);
-                    self.revision = config.revision;
-
-                    //get list of pins
-                    return gpiosService.getPinsDescription();
-                })
+            return gpiosService.getPinsUsage()
                 .then(function(pins) {
-                    for( pin in pins.data )
+                    for( pinNumber in pins.data )
                     {
-                        if( pin % 2 )
+                        if( pinNumber % 2 )
                         {
-                            //odd pin
-                            self.__fillOdds(pin, pins.data[pin], gpios);
+                            self.__fillOdds(pinNumber, pins.data[pinNumber]);
                         }
                         else
                         {
-                            //even pin
-                            self.__fillEvens(pin, pins.data[pin], gpios);
+                            self.__fillEvens(pinNumber, pins.data[pinNumber]);
                         }
                     }
                     self.evens.reverse();
@@ -303,7 +292,6 @@ var gpiosPinsDirective = function(raspiotService, gpiosService, toast, confirm) 
         {
             scope.selectedGpios = [];
         }
-        console.log(scope.selectedGpios);
         controller.maxPins = scope.selectedGpios.length;
         controller.readonly = scope.readonly; //.parseBool();
         controller.init();
