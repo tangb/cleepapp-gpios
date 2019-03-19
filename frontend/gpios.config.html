@@ -4,12 +4,12 @@
         <md-subheader class="md-no-sticky">Configured gpios</md-subheader>
 
         <!-- no item -->
-        <md-list-item ng-if="(gpiosCtl.devices | filterDeviceByService:'gpios').length===0">
+        <md-list-item ng-if="(gpiosCtl.devices | filterDeviceByModule:'gpios').length===0">
             <p>No gpio configured</p>
         </md-list-item>
 
         <!-- items list -->
-        <md-list-item ng-repeat="device in gpiosCtl.devices | filterDeviceByService:'gpios'" class="md-2-line">
+        <md-list-item ng-repeat="device in gpiosCtl.devices | filterDeviceByModule:'gpios'" class="md-2-line">
             <md-icon md-svg-icon="video-input-component"></md-icon>
             <div class="md-list-item-text">
                 <h3>{{device.name}}</h3>
