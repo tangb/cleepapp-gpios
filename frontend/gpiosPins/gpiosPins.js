@@ -43,7 +43,6 @@ var gpiosPinsDirective = function(raspiotService, gpiosService, toast, confirm) 
                     //remove configuration in directive parameter
                     for( var i=0; i<$scope.selectedGpios.length; i++ )
                     {
-                        //dd
                         if( $scope.selectedGpios[i].gpio===pin.name )
                         {
                             $scope.selectedGpios[i].gpio = null;
