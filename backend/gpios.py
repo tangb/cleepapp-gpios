@@ -15,7 +15,6 @@ from raspiot.raspiot import RaspIotModule
 
 __all__ = [u'Gpios']
 
-
 class GpioInputWatcher(Thread):
     """
     Class that watches for changes on specified input pin
@@ -338,7 +337,12 @@ class Gpios(RaspIotModule):
         """
         Setup gpio
         """
-        GPIO.setup(pin, mode, initial=initial, pull_up_down=pull_up_down)
+        if initial is None and pull_up_down is None:
+            GPIO.setup(pin, mode)
+        elif initial is None:
+            GPIO.setup(pin, mode, pull_up_down=pull_up_down)
+        elif pull_up_down is None:
+            GPIO.setup(pin, mode, initial=initial)
 
     def _gpio_output(self, pin, level):
         """
@@ -406,7 +410,7 @@ class Gpios(RaspIotModule):
                 if device[u'on']:
                     initial = GPIO.LOW
                     self.logger.debug(u'Event=%s initial=%s' % (u'gpios.gpio.on', str(initial)))
-                    self._gpio_setup(device[u'pin'], GPIO.OUT, initial)
+                    self._gpio_setup(device[u'pin'], GPIO.OUT, initial=initial)
 
                     #and broadcast gpio status at startup
                     self.logger.debug(u'Broadcast event %s for gpio %s' % (u'gpios.gpio.on', device[u'gpio']))
@@ -415,7 +419,7 @@ class Gpios(RaspIotModule):
                 else:
                     initial = GPIO.HIGH
                     self.logger.debug(u'Event=%s initial=%s' % (u'gpios.gpio.off', str(initial)))
-                    self._gpio_setup(device[u'pin'], GPIO.OUT, initial)
+                    self._gpio_setup(device[u'pin'], GPIO.OUT, initial=initial)
 
                     #and broadcast gpio status at startup
                     self.logger.debug(u'Broadcast event %s for gpio %s' % (u'gpios.gpio.off', device[u'gpio']))
