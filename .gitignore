@@ -1,3 +1,7 @@
 **/*.pyc
 **/.coverage
+docs/source
+docs/_build
+docs/*.zip
+docs/*.txt
 

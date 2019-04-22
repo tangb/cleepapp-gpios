@@ -30,7 +30,7 @@ class GpioInputWatcher(Thread):
         """
         Constructor
 
-        Params: 
+        Args: 
             pin (int): gpio pin number
             uuid (string): device uuid
             on_callback (function): on callback
@@ -62,7 +62,7 @@ class GpioInputWatcher(Thread):
         """
         Return input value
 
-        Return:
+        Returns:
             (GPIO.HIGH | GPIO_LOW): input level
         """
         return GPIO.input(self.pin)
@@ -316,7 +316,7 @@ class Gpios(RaspIotModule):
         """
         Constructor
 
-        Params:
+        Args:
             bootstrap (dict): bootstrap objects
             debug_enabled: debug status
         """
@@ -347,6 +347,10 @@ class Gpios(RaspIotModule):
     def _gpio_output(self, pin, level):
         """
         Set gpio output level
+
+        Args:
+            pin (int): pin number
+            level (int): GPIO.LOW or GPIO.HIGH
         """
         GPIO.output(pin, level)
 
@@ -375,7 +379,7 @@ class Gpios(RaspIotModule):
         Launch input watcher for specified device
 
         Args:
-            dict: device data
+            device (dict): device data
         """
         self.logger.debug(u'Launch input watcher for device "%s" (inverted=%s)' % (device[u'uuid'], device[u'inverted']))
         if not device[u'inverted']:
@@ -389,8 +393,8 @@ class Gpios(RaspIotModule):
         """
         Configure GPIO (internal use)
 
-        Params:
-            device: device object
+        Args:
+            device (dict): device object
         
         Returns:
             bool: True if gpio is configured False otherwise
@@ -451,7 +455,7 @@ class Gpios(RaspIotModule):
             device (dict): device data
 
         Returns:
-            bool: True if gpio reconfigured successfully, False otherwise
+            True if gpio reconfigured successfully, False otherwise
         """
         #stop watcher
         if self._deconfigure_gpio(device):
@@ -468,7 +472,7 @@ class Gpios(RaspIotModule):
             device (dict): device data
 
         Returns:
-            bool: True if gpio deconfigured successfully, False otherwise
+            True if gpio deconfigured successfully, False otherwise
         """
         if device[u'mode']==self.MODE_OUTPUT:
             #nothing to deconfigure for output
@@ -489,7 +493,7 @@ class Gpios(RaspIotModule):
         """
         Callback when input is turned on (internal use)
 
-        Params: 
+        Args: 
             uuid (string): device uuid
         """
         self.logger.debug(u'on_callback for gpio %s triggered' % uuid)
@@ -504,7 +508,7 @@ class Gpios(RaspIotModule):
         """
         Callback when input is turned off
 
-        Params: 
+        Args: 
             uuid (string): device uuid
             duration (float): trigger duration
         """
@@ -530,11 +534,13 @@ class Gpios(RaspIotModule):
         Return module full config
 
         Returns:
-            dict: gpios configuration::
+            gpios configuration::
+
                 {
                     revision (int): revision number (1|2|3)
                     pinsnumber (int): number of board pins
                 }
+
         """
         config = {}
 
@@ -547,11 +553,13 @@ class Gpios(RaspIotModule):
         """
         Return pins usage
 
-        Results:
-            dict: dict of pins 
+        Returns:
+            dict: dict of pins::
+
                 {
                     <pin number (int)>:<gpio name|5v|3.3v|gnd|dnc(string)>
                 }
+
         """
         output = {}
 
@@ -615,10 +623,12 @@ class Gpios(RaspIotModule):
         Return available GPIO pins according to board revision
 
         Returns:
-            dict: dict of gpios 
+            dict of gpios::
+
                 {
                     <gpio name>, <pin number>
                 }
+
         """
         rev = self._get_revision()
 
@@ -654,17 +664,19 @@ class Gpios(RaspIotModule):
         Reserve a gpio used to configure raspberry pi (ie onewire, lirc...)
         This action only flag this gpio as reserved to avoid using it again
 
-        Params:
-            name: name of gpio
-            gpio: gpio value
-            usage: describe gpio usage 
-            command_sender: command request sender (used to set gpio in readonly mode)
+        Args:
+            name (string): name of gpio
+            gpio (string) : gpio value
+            usage (string) : describe gpio usage 
+            command_sender (string): command request sender (used to set gpio in readonly mode)
 
         Returns:
             dict: Created gpio device
 
         Raises:
-            CommandError, MissingParameter, InvalidParameter
+            CommandError
+            MissingParameter
+            InvalidParameter
         """
         #fix command_sender: rpcserver is the default gpio entry point
         if command_sender==u'rpcserver':
@@ -732,7 +744,7 @@ class Gpios(RaspIotModule):
         """
         Return True if gpio is reserved
 
-        Params:
+        Args:
             uuid (string): device uuid
 
         Returns:
@@ -752,7 +764,7 @@ class Gpios(RaspIotModule):
         """
         Add new gpio
 
-        Params:
+        Args:
             name: name of gpio
             gpio: gpio value
             mode: mode (input or output)
@@ -764,7 +776,9 @@ class Gpios(RaspIotModule):
             dict: created gpio device
 
         Raises:
-            CommandError, MissingParameter, InvalidParameter
+            CommandError
+            MissingParameter
+            InvalidParameter
         """
         #fix command_sender: rpcserver is the default gpio entry point
         if command_sender==u'rpcserver':
@@ -822,7 +836,7 @@ class Gpios(RaspIotModule):
         """
         Delete gpio
 
-        Params:
+        Args:
             uuid: device identifier
             command_sender (string): command sender
 
@@ -830,7 +844,10 @@ class Gpios(RaspIotModule):
             bool: True if device was deleted, False otherwise
 
         Raises:
-            CommandError, MissingParameter, Unauthorized, InvalidParameter
+            CommandError
+            MissingParameter
+            Unauthorized
+            InvalidParameter
         """
         #fix command_sender: rpcserver is the default gpio entry point
         if command_sender==u'rpcserver':
@@ -857,7 +874,7 @@ class Gpios(RaspIotModule):
         """
         Update gpio
 
-        Params:
+        Args:
             uuid (string): device identifier
             name (string): gpio name
             keep (bool): keep status flag
@@ -868,7 +885,10 @@ class Gpios(RaspIotModule):
             dict: updated gpio device
 
         Raises:
-            CommandError, MissingParameter, Unauthorized, InvalidParameter
+            CommandError
+            MissingParameter
+            Unauthorized
+            InvalidParameter
         """
         #fix command_sender: rpcserver is the default gpio entry point
         if command_sender==u'rpcserver':
@@ -909,11 +929,14 @@ class Gpios(RaspIotModule):
         """
         Turn on specified device
 
-        Params:
+        Args:
             uuid (string): device identifier
 
         Returns:
             bool: True if command executed successfully
+
+        Raises:
+            CommandError
         """
         #check values
         device = self._get_device(uuid)
@@ -940,7 +963,7 @@ class Gpios(RaspIotModule):
         """
         Turn off specified device
 
-        Params:
+        Args:
             uuid (string): device identifier
 
         Returns:
@@ -973,7 +996,7 @@ class Gpios(RaspIotModule):
         """
         Return gpio status (on or off)
 
-        Params:
+        Args:
             uuid (string): device identifier
 
         Returns:
