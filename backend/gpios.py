@@ -330,8 +330,8 @@ class Gpios(RaspIotModule):
         GPIO.setwarnings(False)
 
         #events
-        self.gpios_gpios_off = self._get_event('gpios.gpio.off')
-        self.gpios_gpios_on = self._get_event('gpios.gpio.on')
+        self.gpios_gpio_off = self._get_event('gpios.gpio.off')
+        self.gpios_gpio_on = self._get_event('gpios.gpio.on')
 
     def _gpio_setup(self, pin, mode, initial=None, pull_up_down=None): # pragma: no cover
         """
@@ -418,7 +418,7 @@ class Gpios(RaspIotModule):
 
                     #and broadcast gpio status at startup
                     self.logger.debug(u'Broadcast event %s for gpio %s' % (u'gpios.gpio.on', device[u'gpio']))
-                    self.gpios_gpios_on.send(params={u'gpio':u'gpio', u'init':True}, device_id=device[u'gpio'])
+                    self.gpios_gpio_on.send(params={u'gpio':u'gpio', u'init':True}, device_id=device[u'gpio'])
 
                 else:
                     initial = GPIO.HIGH
@@ -427,7 +427,7 @@ class Gpios(RaspIotModule):
 
                     #and broadcast gpio status at startup
                     self.logger.debug(u'Broadcast event %s for gpio %s' % (u'gpios.gpio.off', device[u'gpio']))
-                    self.gpios_gpios_off.send(params={u'gpio':u'gpio', u'init':True, u'duration':0}, device_id=device[u'gpio'])
+                    self.gpios_gpio_off.send(params={u'gpio':u'gpio', u'init':True, u'duration':0}, device_id=device[u'gpio'])
 
             elif device[u'mode']==self.MODE_INPUT:
                 if not device[u'inverted']:
@@ -502,7 +502,7 @@ class Gpios(RaspIotModule):
             raise Exception(u'Device %s not found' % uuid)
 
         #broadcast event
-        self.gpios_gpios_on.send(params={u'gpio':device[u'gpio'], u'init':False}, device_id=uuid)
+        self.gpios_gpio_on.send(params={u'gpio':device[u'gpio'], u'init':False}, device_id=uuid)
 
     def __input_off_callback(self, uuid, duration):
         """
@@ -518,7 +518,7 @@ class Gpios(RaspIotModule):
             raise Exception(u'Device %s not found' % uuid)
 
         #broadcast event
-        self.gpios_gpios_off.send(params={u'gpio':device[u'gpio'], u'init':False, u'duration':duration}, device_id=uuid)
+        self.gpios_gpio_off.send(params={u'gpio':device[u'gpio'], u'init':False, u'duration':duration}, device_id=uuid)
 
     def _get_revision(self):
         """
@@ -955,7 +955,7 @@ class Gpios(RaspIotModule):
             self._update_device(uuid, device)
 
         #broadcast event
-        self.gpios_gpios_on.send(params={u'gpio':device[u'gpio'], u'init':False}, device_id=uuid)
+        self.gpios_gpio_on.send(params={u'gpio':device[u'gpio'], u'init':False}, device_id=uuid)
 
         return True
 
@@ -988,7 +988,7 @@ class Gpios(RaspIotModule):
             self._update_device(uuid, device)
 
         #broadcast event
-        self.gpios_gpios_off.send(params={u'gpio':device[u'gpio'], u'init':False, u'duration':0}, device_id=uuid)
+        self.gpios_gpio_off.send(params={u'gpio':device[u'gpio'], u'init':False, u'duration':0}, device_id=uuid)
 
         return True
 
