@@ -9,12 +9,10 @@ from raspiot.utils import InvalidParameter, MissingParameter, CommandError, Unau
 from raspiot.libs.tests import session
 import RPi.GPIO as GPIO
 
-LOG_LEVEL = logging.INFO
-
 class TestGpioInputWatcher(unittest.TestCase):
 
     def setUp(self):
-        self.session = session.Session(LOG_LEVEL)
+        self.session = session.Session(logging.ERROR)
         self.w = GpioInputWatcher(7, '123-456-789-123', self.__on_callback, self.__off_callback)
         self.on_cb_count = 0 
         self.off_cb_count = 0 
