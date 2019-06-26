@@ -611,12 +611,7 @@ class Gpios(RaspIotModule):
         Returns:
             list: list of gpios
         """
-        devices = self.get_module_devices()
-        gpios = []
-        for uuid in devices:
-            gpios.append(devices[uuid][u'gpio'])
-        
-        return gpios
+        return [device[u'gpio'] for _, device in self.get_module_devices().items()]
 
     def get_raspi_gpios(self):
         """
@@ -626,7 +621,7 @@ class Gpios(RaspIotModule):
             dict of gpios::
 
                 {
-                    <gpio name>, <pin number>
+                    <gpio name>: <pin number>
                 }
 
         """
@@ -1013,6 +1008,26 @@ class Gpios(RaspIotModule):
             raise CommandError(u'Gpio %s configured as %s cannot be checked' % (device[u'uuid'], device[u'mode']))
 
         return device['on']
+
+    def is_gpio_on(self, gpio):
+        """
+        Get value of specified gpio. Gpio doesn't have to be declared as device
+
+        Args:
+            gpio (string): valid gpio value
+
+        Return:
+            bool: True if gpio is on, False otherwise
+        """
+        #check values
+        all_gpios = self.get_raspi_gpios()
+        if gpio not in all_gpios.values():
+            raise InvalidParameter('Parameter "gpio" is invalid')
+
+        pin = all_gpios[gpio]
+        self.logger.debug(u'Read value for gpio "%s" (pin %s)' % (gpio, pin))
+
+        return True if GPIO.input(pin)==GPIO.HIGH else False
 
     def reset_gpios(self):
         """
