@@ -1,5 +1,5 @@
 {
-    "icon": "video-input-component",
+    "icon": "drag-horizontal",
     "global": {
         "js": ["gpio.widget.js", "gpiosPins/gpiosPins.js", "gpios.service.js"],
         "html": ["gpio.widget.html", "gpiosPins/gpiosPins.html"],
