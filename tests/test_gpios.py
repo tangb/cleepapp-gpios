@@ -92,7 +92,7 @@ class TestGpioInputWatcher(unittest.TestCase):
 class TestGpios(unittest.TestCase):
 
     def setUp(self):
-        self.session = session.Session(LOG_LEVEL)
+        self.session = session.Session(logging.CRITICAL)
         self.module = self.session.setup(Gpios)
         self.module._gpio_setup = self.__gpio_setup
         self.configure_counter = 0
@@ -518,9 +518,9 @@ class TestGpios(unittest.TestCase):
         self.module._gpio_output = self.__gpio_output
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
 
-        calls = self.session.get_event_send_calls('gpios.gpio.on')
+        calls = self.session.get_event_calls('gpios.gpio.on')
         self.module.turn_on(device['uuid'])
-        self.assertEqual(self.session.get_event_send_calls('gpios.gpio.on'), calls+1, '"gpios.gpio.on" wasn\'t triggered')
+        self.assertEqual(self.session.get_event_calls('gpios.gpio.on'), calls+1, '"gpios.gpio.on" wasn\'t triggered')
 
     def test_turn_off(self):
         data = {
@@ -534,9 +534,9 @@ class TestGpios(unittest.TestCase):
         self.module._gpio_output = self.__gpio_output
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
 
-        calls = self.session.get_event_send_calls('gpios.gpio.off')
+        calls = self.session.get_event_calls('gpios.gpio.off')
         self.module.turn_off(device['uuid'])
-        self.assertEqual(self.session.get_event_send_calls('gpios.gpio.off'), calls+1, '"gpios.gpio.off" wasn\'t triggered')
+        self.assertEqual(self.session.get_event_calls('gpios.gpio.off'), calls+1, '"gpios.gpio.off" wasn\'t triggered')
 
     def test_is_on(self):
         data = {
