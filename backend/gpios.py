@@ -684,7 +684,7 @@ class Gpios(RaspIotModule):
         if not gpio:
             raise MissingParameter(u'Parameter "gpio" is missing')
         elif found_gpio is not None and found_gpio[u'mode']!=usage:
-            raise InvalidParameter(u'Gpio is already reserved for "%s" usage' % found_gpio[u'mode'])
+            raise InvalidParameter(u'Gpio "%s" is already reserved for "%s" usage' % (found_gpio[u'gpio'], found_gpio[u'subtype']))
         elif found_gpio is not None and found_gpio[u'mode']==usage:
             return found_gpio
         elif not name:
