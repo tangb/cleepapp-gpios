@@ -13,8 +13,8 @@ var gpiosPinsDirective = function(raspiotService, gpiosService, toast, confirm) 
         self.currentLabel = '';
         self.pinInfos = [];
         self.configuredGpio = {};
-        //Blue-Green-Lime-DeepOrange-BlueGrey-Brown-Cyan-Pink-Teal-Yellow
-        self.colors = ['#2196F3', '#4CAF50', '#CDDC39', '#FF5722', '#607D8B', '#795548', '#00BCD4', '#FF80AB', '#009688', '#FFEB3B'];
+        //Yellow-Blue-Green-Lime-DeepOrange-BlueGrey-Brown-Cyan-Pink-Teal
+        self.colors = ['#FFEB3B', '#2196F3', '#4CAF50', '#CDDC39', '#FF5722', '#607D8B', '#795548', '#00BCD4', '#FF80AB', '#009688'];
         self.readonly = false;
 
         /**
@@ -245,6 +245,14 @@ var gpiosPinsDirective = function(raspiotService, gpiosService, toast, confirm) 
          */
         self.init = function()
         {
+            //reset
+            self.countPins = 0;
+            self.selectedPins = {};
+            self.pinInfos = [];
+            self.evens = [];
+            self.odds = [];
+            self.maxPins = $scope.selectedGpios.length;
+
             //prepare internal data
             for( var i=0; i<$scope.selectedGpios.length; i++ )
             {
@@ -283,6 +291,13 @@ var gpiosPinsDirective = function(raspiotService, gpiosService, toast, confirm) 
                     self.odds.reverse();
                 });
         };
+
+        $scope.$watch('selectedGpios', function(newValue, oldValue) {
+            if( newValue!=oldValue && newValue )
+            {
+                self.init();
+            }
+        });
 
     }];
 
