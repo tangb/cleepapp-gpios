@@ -12,7 +12,7 @@ import RPi.GPIO as GPIO
 class TestGpioInputWatcher(unittest.TestCase):
 
     def setUp(self):
-        self.session = session.Session(logging.ERROR)
+        self.session = session.TestSession(logging.ERROR)
         self.w = GpioInputWatcher(7, '123-456-789-123', self.__on_callback, self.__off_callback)
         self.on_cb_count = 0 
         self.off_cb_count = 0 
