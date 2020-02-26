@@ -92,7 +92,7 @@ class TestGpioInputWatcher(unittest.TestCase):
 class TestGpios(unittest.TestCase):
 
     def setUp(self):
-        self.session = session.Session(logging.CRITICAL)
+        self.session = session.TestSession(logging.CRITICAL)
         self.module = self.session.setup(Gpios)
         self.module._gpio_setup = self.__gpio_setup
         self.configure_counter = 0
