@@ -97,18 +97,18 @@ class GpioInputWatcher(Thread):
 
                 if last_level is None:
                     #first iteration, send initial value
-                    if self.level==GPIO_LOW:
+                    if self.level == GPIO_LOW:
                         self.off_callback(self.uuid, 0)
                     else:
                         self.on_callback(self.uuid)
 
-                elif level!=last_level and level==self.level:
+                elif level != last_level and level == self.level:
                     self.logger.trace('Input %s on' % str(self.pin))
                     time_on = uptime.uptime()
                     self.on_callback(self.uuid)
                     time.sleep(self.debounce)
 
-                elif level!=last_level:
+                elif level != last_level:
                     self.logger.trace('Input %s off' % str(self.pin))
                     self.off_callback(self.uuid, uptime.uptime()-time_on)
                     time.sleep(self.debounce)
@@ -434,13 +434,13 @@ class Gpios(CleepModule):
         self.logger.debug('Configure gpio for device %s' % (device))
 
         # check if gpio is not reserved
-        if device['mode']==self.MODE_RESERVED:
+        if device['mode'] == self.MODE_RESERVED:
             self.logger.debug('Reserved gpio cannot be configured')
             return True
 
         try:
             # get gpio pin
-            if device['mode']==self.MODE_OUTPUT:
+            if device['mode'] == self.MODE_OUTPUT:
                 self.logger.debug('Configure gpio %s pin %d as OUTPUT' % (device['gpio'], device['pin']))
                 # configure it
                 if device['on']:
@@ -450,7 +450,7 @@ class Gpios(CleepModule):
 
                     # and broadcast gpio status at startup
                     self.logger.debug('Broadcast event %s for gpio %s' % ('gpios.gpio.on', device['gpio']))
-                    self.gpios_gpio_on.send(params={'gpio':'gpio', 'init':True}, device_id=device['gpio'])
+                    self.gpios_gpio_on.send(params={'gpio':device['gpio'], 'init':True}, device_id=device['uuid'])
 
                 else:
                     initial = GPIO_HIGH
@@ -459,9 +459,9 @@ class Gpios(CleepModule):
 
                     # and broadcast gpio status at startup
                     self.logger.debug('Broadcast event %s for gpio %s' % ('gpios.gpio.off', device['gpio']))
-                    self.gpios_gpio_off.send(params={'gpio':'gpio', 'init':True, 'duration':0}, device_id=device['gpio'])
+                    self.gpios_gpio_off.send(params={'gpio':device['gpio'], 'init':True, 'duration':0}, device_id=device['uuid'])
 
-            elif device['mode']==self.MODE_INPUT:
+            elif device['mode'] == self.MODE_INPUT:
                 if not device['inverted']:
                     self.logger.debug('Configure gpio %s (pin %s) as INPUT' % (device['gpio'], device['pin']))
                 else:
@@ -506,7 +506,7 @@ class Gpios(CleepModule):
         Returns:
             True if gpio deconfigured successfully, False otherwise
         """
-        if device['mode']==self.MODE_OUTPUT:
+        if device['mode'] == self.MODE_OUTPUT:
             # nothing to deconfigure for output
             return True
 
@@ -521,36 +521,36 @@ class Gpios(CleepModule):
 
         return True
 
-    def __input_on_callback(self, uuid):
+    def __input_on_callback(self, device_uuid):
         """
         Callback when input is turned on (internal use)
 
         Args:
-            uuid (string): device uuid
+            device_uuid (string): device uuid
         """
-        self.logger.debug('on_callback for gpio %s triggered' % uuid)
-        device = self._get_device(uuid)
+        self.logger.debug('on_callback for gpio %s triggered' % device_uuid)
+        device = self._get_device(device_uuid)
         if device is None:
-            raise Exception('Device %s not found' % uuid)
+            raise Exception('Device "%s" not found' % device_uuid)
 
         # broadcast event
-        self.gpios_gpio_on.send(params={'gpio':device['gpio'], 'init':False}, device_id=uuid)
+        self.gpios_gpio_on.send(params={'gpio':device['gpio'], 'init':False}, device_id=device_uuid)
 
-    def __input_off_callback(self, uuid, duration):
+    def __input_off_callback(self, device_uuid, duration):
         """
         Callback when input is turned off
 
         Args:
-            uuid (string): device uuid
+            device_uuid (string): device uuid
             duration (float): trigger duration
         """
-        self.logger.debug('off_callback for gpio %s triggered' % uuid)
-        device = self._get_device(uuid)
+        self.logger.debug('off_callback for gpio %s triggered' % device_uuid)
+        device = self._get_device(device_uuid)
         if device is None:
-            raise Exception('Device %s not found' % uuid)
+            raise Exception('Device "%s" not found' % device_uuid)
 
         # broadcast event
-        self.gpios_gpio_off.send(params={'gpio':device['gpio'], 'init':False, 'duration':duration}, device_id=uuid)
+        self.gpios_gpio_off.send(params={'gpio':device['gpio'], 'init':False, 'duration':duration}, device_id=device_uuid)
 
     def _get_revision(self):
         """
@@ -598,11 +598,11 @@ class Gpios(CleepModule):
         # get pins descriptions according to raspberry pi revision
         all_pins = {}
         rev = self._get_revision()
-        if rev==1:
+        if rev == 1:
             all_pins = self.PINS_REV1
-        elif rev==2:
+        elif rev == 2:
             all_pins = self.PINS_REV2
-        elif rev==3:
+        elif rev == 3:
             all_pins = self.PINS_REV3
         self.logger.debug('all_pins %s' % all_pins)
 
@@ -623,7 +623,7 @@ class Gpios(CleepModule):
                 assigned = False
                 owner = None
                 for uuid in devices:
-                    if devices[uuid]['gpio']==gpio_name:
+                    if devices[uuid]['gpio'] == gpio_name:
                         assigned = True
                         owner = devices[uuid]['owner']
                         break
@@ -658,11 +658,11 @@ class Gpios(CleepModule):
         """
         rev = self._get_revision()
 
-        if rev==1:
+        if rev == 1:
             return self.GPIOS_REV1
-        if rev==2:
+        if rev == 2:
             return self.GPIOS_REV2
-        if rev==3:
+        if rev == 3:
             gpios = self.GPIOS_REV2.copy()
             gpios.update(self.GPIOS_REV3)
             return gpios
@@ -680,7 +680,7 @@ class Gpios(CleepModule):
 
         if rev in (1, 2):
             return 26
-        if rev==3:
+        if rev == 3:
             return 40
 
         return 0
@@ -705,7 +705,7 @@ class Gpios(CleepModule):
             InvalidParameter
         """
         # fix command_sender: rpcserver is the default gpio entry point
-        if command_sender=='rpcserver':
+        if command_sender == 'rpcserver':
             command_sender = 'gpios'
 
         # search for gpio device
@@ -714,9 +714,9 @@ class Gpios(CleepModule):
         # check values
         if not gpio:
             raise MissingParameter('Parameter "gpio" is missing')
-        if found_gpio is not None and found_gpio['mode']!=usage:
+        if found_gpio is not None and found_gpio['subtype'] != usage:
             raise InvalidParameter('Gpio "%s" is already reserved for "%s" usage' % (found_gpio['gpio'], found_gpio['subtype']))
-        if found_gpio is not None and found_gpio['mode']==usage:
+        if found_gpio is not None and found_gpio['subtype'] == usage:
             return found_gpio
         if not name:
             raise MissingParameter('Parameter "name" is missing')
@@ -724,7 +724,7 @@ class Gpios(CleepModule):
             raise InvalidParameter('Name "%s" is already used' % name)
         if gpio not in self.get_raspi_gpios().keys():
             raise InvalidParameter('Gpio "%s" does not exist for this raspberry pi' % gpio)
-        if usage is None or len(usage)==0:
+        if usage is None or len(usage) == 0:
             raise MissingParameter('Parameter "usage" is missing')
 
         # gpio is valid, prepare new entry
@@ -759,11 +759,11 @@ class Gpios(CleepModule):
         Returns:
             list: list of reserved gpios (full data)
         """
-        if usage is None or len(usage)==0:
+        if usage is None or len(usage) == 0:
             raise MissingParameter('Parameter "usage" is missing')
 
         gpios = self._search_devices('subtype', usage)
-        return [gpio for gpio in gpios if gpio['mode']==self.MODE_RESERVED]
+        return [gpio for gpio in gpios if gpio['mode'] == self.MODE_RESERVED]
 
     def is_reserved_gpio(self, gpio):
         """
@@ -780,7 +780,7 @@ class Gpios(CleepModule):
             return False
 
         self.logger.debug('is_reserved_gpio: %s' % device)
-        if device['mode']==self.MODE_RESERVED:
+        if device['mode'] == self.MODE_RESERVED:
             return True
 
         return False
@@ -806,7 +806,7 @@ class Gpios(CleepModule):
             InvalidParameter
         """
         # fix command_sender: rpcserver is the default gpio entry point
-        if command_sender=='rpcserver':
+        if command_sender == 'rpcserver':
             command_sender = 'gpios'
 
         # check values
@@ -875,7 +875,7 @@ class Gpios(CleepModule):
             InvalidParameter
         """
         # fix command_sender: rpcserver is the default gpio entry point
-        if command_sender=='rpcserver':
+        if command_sender == 'rpcserver':
             command_sender = 'gpios'
 
         # check values
@@ -884,7 +884,7 @@ class Gpios(CleepModule):
         device = self._get_device(uuid)
         if device is None:
             raise InvalidParameter('Device does not exist')
-        if device['owner']!=command_sender:
+        if device['owner'] != command_sender:
             raise Unauthorized('Device can only be deleted by module which created it')
 
         # device is valid, remove entry
@@ -916,7 +916,7 @@ class Gpios(CleepModule):
             InvalidParameter
         """
         # fix command_sender: rpcserver is the default gpio entry point
-        if command_sender=='rpcserver':
+        if command_sender == 'rpcserver':
             command_sender = 'gpios'
 
         # check values
@@ -925,7 +925,7 @@ class Gpios(CleepModule):
         device = self._get_device(uuid)
         if device is None:
             raise InvalidParameter('Device does not exist')
-        if name is None or len(name)==0:
+        if name is None or len(name) == 0:
             raise MissingParameter('Parameter "name" is missing')
         if keep is None:
             raise MissingParameter('Parameter "keep" is missing')
@@ -935,7 +935,7 @@ class Gpios(CleepModule):
             raise MissingParameter('Parameter "inverted" is missing')
         if not isinstance(inverted, bool):
             raise InvalidParameter('Parameter "inverted" must be bool')
-        if device['owner']!=command_sender:
+        if device['owner'] != command_sender:
             raise Unauthorized('Device can only be deleted by module that created it')
 
         # device is valid, update entry
@@ -967,7 +967,7 @@ class Gpios(CleepModule):
         device = self._get_device(uuid)
         if device is None:
             raise CommandError('Device not found')
-        if device['mode']!=self.MODE_OUTPUT:
+        if device['mode'] != self.MODE_OUTPUT:
             raise CommandError('Gpio %s configured as %s cannot be turned on' % (device['uuid'], device['mode']))
 
         # turn on relay
@@ -1000,7 +1000,7 @@ class Gpios(CleepModule):
         device = self._get_device(uuid)
         if device is None:
             raise CommandError('Device not found')
-        if device['mode']!=self.MODE_OUTPUT:
+        if device['mode'] != self.MODE_OUTPUT:
             raise CommandError('Gpio %s configured as %s cannot be turned off' % (device['uuid'], device['mode']))
 
         # turn off relay
@@ -1034,7 +1034,7 @@ class Gpios(CleepModule):
         device = self._get_device(uuid)
         if device is None:
             raise CommandError('Device not found')
-        if device['mode']==self.MODE_RESERVED:
+        if device['mode'] == self.MODE_RESERVED:
             raise CommandError('Gpio %s configured as %s cannot be checked' % (device['uuid'], device['mode']))
 
         return device['on']
@@ -1065,7 +1065,7 @@ class Gpios(CleepModule):
         """
         devices = self.get_module_devices()
         for uuid in devices:
-            if devices[uuid]['mode']==Gpios.MODE_OUTPUT:
+            if devices[uuid]['mode'] == Gpios.MODE_OUTPUT:
                 self.turn_off(uuid)
 
 
