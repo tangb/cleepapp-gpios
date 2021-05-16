@@ -1,8 +1,11 @@
 /**
- * Gpios config directive
+ * Gpios config component
  * Handle gpios configuration
  */
-var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, toast, confirm, $mdDialog) {
+angular
+.module('Cleep')
+.directive('gpiosConfigComponent', ['$rootScope', 'gpiosService', 'raspiotService', 'toastService', 'confirmService', '$mdDialog',
+function($rootScope, gpiosService, raspiotService, toast, confirm, $mdDialog) {
 
     var gpiosConfigController = function() {
         var self = this;
@@ -30,13 +33,10 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
          * Close dialog
          */
         self.closeDialog = function() {
-            //check values
-            if( self.name.length===0 )
-            {
+            // check values
+            if( self.name.length===0 ) {
                 toast.error('All fields are required');
-            }
-            else
-            {
+            } else {
                 $mdDialog.hide();
             }
         };
@@ -83,14 +83,14 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
          * Update device
          */
         self.openUpdateDialog = function(device) {
-            //set editor's value
+            // set editor's value
             self.name = device.name;
             self.selectedGpios = [{gpio:device.gpio, label:'gpio'}];
             self.mode = device.mode;
             self.keep = device.keep;
             self.inverted = device.inverted;
 
-            //open dialog
+            // open dialog
             self.updateDevice = true;
             self._openDialog()
                 .then(function() {
@@ -120,13 +120,13 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
         /**
          * Init controller
          */
-        self.init = function() {
+        self.$onInit = function() {
             raspiotService.getModuleConfig('gpios')
                 .then(function(config) {
                     self.raspiGpios = config.raspi_gpios;
                 });
 
-            //add module actions to fabButton
+            // add module actions to fabButton
             var actions = [{
                 icon: 'plus',
                 callback: self.openAddDialog,
@@ -136,20 +136,12 @@ var gpiosConfigDirective = function($rootScope, gpiosService, raspiotService, to
         };
     };
 
-    var gpiosConfigLink = function(scope, element, attrs, controller) {
-        controller.init();
-    };
-
     return {
         templateUrl: 'gpios.config.html',
         replace: true,
         scope: true,
         controller: gpiosConfigController,
         controllerAs: 'gpiosCtl',
-        link: gpiosConfigLink
     };
-};
-
-var RaspIot = angular.module('RaspIot');
-RaspIot.directive('gpiosConfigDirective', ['$rootScope', 'gpiosService', 'raspiotService', 'toastService', 'confirmService', '$mdDialog', gpiosConfigDirective]);
+}]);
 

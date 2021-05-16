@@ -1,8 +1,11 @@
 /**
- * Gpio widget directive
+ * Gpio widget
  * Display gpio dashboard widget
  */
-var widgetGpioDirective = function() {
+angular
+.module('Cleep')
+.directive('gpioWidget', [
+function() {
 
     var widgetGpioController = ['$scope', function($scope) {
         var self = this;
@@ -19,8 +22,5 @@ var widgetGpioDirective = function() {
         controller: widgetGpioController,
         controllerAs: 'widgetCtl'
     };
-};
-
-var RaspIot = angular.module('RaspIot');
-RaspIot.directive('widgetGpioDirective', [widgetGpioDirective]);
+}]);
 

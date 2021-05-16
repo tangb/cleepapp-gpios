@@ -2,19 +2,19 @@
  * Gpios service
  * Handle gpios module requests
  */
-var gpiosService = function($q, $rootScope, rpcService, raspiotService) {
+angular
+.module('Cleep')
+.service('gpiosService', ['$q', '$rootScope', 'rpcService', 'raspiotService',
+function($q, $rootScope, rpcService, raspiotService) {
     var self = this;
     
     /**
      * Init module devices
      */
-    self.initDevices = function(devices)
-    {
-        for( var uuid in devices )
-        {
-            //change current color if gpio is on
-            if( devices[uuid].on )
-            {
+    self.initDevices = function(devices) {
+        for( var uuid in devices ) {
+            // change current color if gpio is on
+            if( devices[uuid].on ) {
                 devices[uuid].__widget.mdcolors = '{background:"default-accent-400"}';
             }
         }
@@ -91,12 +91,9 @@ var gpiosService = function($q, $rootScope, rpcService, raspiotService) {
      * Catch gpio on events
      */
     $rootScope.$on('gpios.gpio.on', function(event, uuid, params) {
-        for( var i=0; i<raspiotService.devices.length; i++ )
-        {
-            if( raspiotService.devices[i].uuid==uuid )
-            {
-                if( raspiotService.devices[i].on===false )
-                {
+        for( var i=0; i<raspiotService.devices.length; i++ ) {
+            if( raspiotService.devices[i].uuid==uuid ) {
+                if( raspiotService.devices[i].on===false ) {
                     raspiotService.devices[i].on = true;
                     raspiotService.devices[i].__widget.mdcolors = '{background:"default-accent-400"}';
                     break;
@@ -109,12 +106,9 @@ var gpiosService = function($q, $rootScope, rpcService, raspiotService) {
      * Catch gpio off events
      */
     $rootScope.$on('gpios.gpio.off', function(event, uuid, params) {
-        for( var i=0; i<raspiotService.devices.length; i++ )
-        {
-            if( raspiotService.devices[i].uuid==uuid )
-            {
-                if( raspiotService.devices[i].on===true )
-                {
+        for( var i=0; i<raspiotService.devices.length; i++ ) {
+            if( raspiotService.devices[i].uuid==uuid ) {
+                if( raspiotService.devices[i].on===true ) {
                     raspiotService.devices[i].on = false;
                     raspiotService.devices[i].__widget.mdcolors = '{background:"default-primary-300"}';
                     break;
@@ -122,8 +116,5 @@ var gpiosService = function($q, $rootScope, rpcService, raspiotService) {
             }
         }
     });
-};
-    
-var RaspIot = angular.module('RaspIot');
-RaspIot.service('gpiosService', ['$q', '$rootScope', 'rpcService', 'raspiotService', gpiosService]);
+}]);
 

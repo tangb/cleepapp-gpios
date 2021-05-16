@@ -1,9 +1,9 @@
 {
     "icon": "drag-horizontal",
     "global": {
-        "js": ["gpio.widget.js", "gpiosPins/gpiosPins.js", "gpios.service.js"],
-        "html": ["gpio.widget.html", "gpiosPins/gpiosPins.html"],
-        "css": ["gpiosPins/gpiosPins.css"]
+        "js": ["gpio.widget.js", "gpiosPins/gpiosPins.component.js", "gpios.service.js"],
+        "html": ["gpio.widget.html", "gpiosPins/gpiosPins.component.html"],
+        "css": ["gpiosPins/gpiosPins.component.css"]
     },
     "config": {
         "js": ["gpios.config.js"],
