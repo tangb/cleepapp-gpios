@@ -5,6 +5,8 @@ import sys, os, copy
 import shutil
 sys.path.append('../')
 from backend.gpios import Gpios, GpioInputWatcher
+from backend.gpiosgpioonevent import GpiosGpioOnEvent
+from backend.gpiosgpiooffevent import GpiosGpioOffEvent
 from cleep.exception import InvalidParameter, MissingParameter, CommandError, Unauthorized
 from cleep.libs.tests import session
 import RPi.GPIO as GPIO
@@ -1042,6 +1044,32 @@ class TestGpios(unittest.TestCase):
         self.module.reset_gpios()
         self.assertEqual(self.module.is_on(device1['uuid']), False)
         self.assertEqual(self.module.is_on(device2['uuid']), False)
+
+
+
+
+class TestsGpiosGpioOnEvent(unittest.TestCase):
+
+    def setUp(self):
+        logging.basicConfig(level=logging.FATAL, format=u'%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
+        self.session = session.TestSession(self)
+        self.event = self.session.setup_event(GpiosGpioOnEvent)
+
+    def test_event_params(self):
+        self.assertCountEqual(self.event.EVENT_PARAMS, ['gpio', 'init'])
+
+
+
+
+class TestsGpiosGpioOffEvent(unittest.TestCase):
+
+    def setUp(self):
+        logging.basicConfig(level=logging.FATAL, format=u'%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
+        self.session = session.TestSession(self)
+        self.event = self.session.setup_event(GpiosGpioOffEvent)
+
+    def test_event_params(self):
+        self.assertCountEqual(self.event.EVENT_PARAMS, ['gpio', 'duration', 'init'])
         
 
 
