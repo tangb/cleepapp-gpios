@@ -821,11 +821,11 @@ class Gpios(CleepModule):
         if inverted is None:
             raise MissingParameter('Parameter "inverted" is missing')
         if self._search_device('name', name) is not None:
-            raise InvalidParameter('Name "%s" already used' % name)
+            raise InvalidParameter('Name "%s" is already used' % name)
         if gpio not in self.get_raspi_gpios().keys():
             raise InvalidParameter('Gpio "%s" does not exist for this raspberry pi' % gpio)
         if mode not in (self.MODE_INPUT, self.MODE_OUTPUT):
-            raise InvalidParameter('Mode "%s" is invalid' % mode)
+            raise InvalidParameter('Parameter mode "%s" is invalid' % mode)
         if self._search_device('gpio', gpio) is not None:
             raise InvalidParameter('Gpio "%s" is already configured' % gpio)
         if not isinstance(keep, bool):
@@ -857,7 +857,7 @@ class Gpios(CleepModule):
 
         return device
 
-    def delete_gpio(self, uuid, command_sender):
+    def delete_gpio(self, device_uuid, command_sender):
         """
         Delete gpio
 
@@ -879,28 +879,28 @@ class Gpios(CleepModule):
             command_sender = 'gpios'
 
         # check values
-        if not uuid:
-            raise MissingParameter('Uuid parameter is missing')
-        device = self._get_device(uuid)
+        if not device_uuid:
+            raise MissingParameter('Parameter "device_uuid" is missing')
+        device = self._get_device(device_uuid)
         if device is None:
-            raise InvalidParameter('Device does not exist')
+            raise InvalidParameter('Device "%s" does not exist' % device_uuid)
         if device['owner'] != command_sender:
-            raise Unauthorized('Device can only be deleted by module which created it')
+            raise Unauthorized('Device can only be deleted by its owner')
 
         # device is valid, remove entry
-        if not self._delete_device(uuid):
+        if not self._delete_device(device_uuid):
             raise CommandError('Failed to delete device "%s"' % device['uuid'])
 
         self._deconfigure_gpio(device)
 
         return True
 
-    def update_gpio(self, uuid, name, keep, inverted, command_sender):
+    def update_gpio(self, device_uuid, name, keep, inverted, command_sender):
         """
         Update gpio
 
         Args:
-            uuid (string): device identifier
+            device_uuid (string): device identifier
             name (string): gpio name
             keep (bool): keep status flag
             inverted (bool): inverted flag
@@ -920,11 +920,11 @@ class Gpios(CleepModule):
             command_sender = 'gpios'
 
         # check values
-        if not uuid:
-            raise MissingParameter('Uuid parameter is missing')
-        device = self._get_device(uuid)
+        if not device_uuid:
+            raise MissingParameter('Parameter "device_uuid" is missing')
+        device = self._get_device(device_uuid)
         if device is None:
-            raise InvalidParameter('Device does not exist')
+            raise InvalidParameter('Device "%s" does not exist' % device_uuid)
         if name is None or len(name) == 0:
             raise MissingParameter('Parameter "name" is missing')
         if keep is None:
@@ -936,26 +936,26 @@ class Gpios(CleepModule):
         if not isinstance(inverted, bool):
             raise InvalidParameter('Parameter "inverted" must be bool')
         if device['owner'] != command_sender:
-            raise Unauthorized('Device can only be deleted by module that created it')
+            raise Unauthorized('Device can only be updated by its owner')
 
         # device is valid, update entry
         device['name'] = name
         device['keep'] = keep
         device['inverted'] = inverted
-        if not self._update_device(uuid, device):
-            raise CommandError('Unable to update device "%s"' % device['uuid'])
+        if not self._update_device(device_uuid, device):
+            raise CommandError('Failed to update device "%s"' % device['uuid'])
 
         # relaunch watcher
         self._reconfigure_gpio(device)
 
         return device
 
-    def turn_on(self, uuid):
+    def turn_on(self, device_uuid):
         """
         Turn on specified device
 
         Args:
-            uuid (string): device identifier
+            device_uuid (string): device identifier
 
         Returns:
             bool: True if command executed successfully
@@ -964,11 +964,11 @@ class Gpios(CleepModule):
             CommandError
         """
         # check values
-        device = self._get_device(uuid)
+        device = self._get_device(device_uuid)
         if device is None:
             raise CommandError('Device not found')
         if device['mode'] != self.MODE_OUTPUT:
-            raise CommandError('Gpio %s configured as %s cannot be turned on' % (device['uuid'], device['mode']))
+            raise CommandError('Gpio "%s" configured as "%s" cannot be turned on' % (device['gpio'], device['mode']))
 
         # turn on relay
         self.logger.debug('Turn on GPIO %s' % device['gpio'])
@@ -977,10 +977,10 @@ class Gpios(CleepModule):
         # save current state
         device['on'] = True
         if device['keep']:
-            self._update_device(uuid, device)
+            self._update_device(device_uuid, device)
 
         # broadcast event
-        self.gpios_gpio_on.send(params={'gpio':device['gpio'], 'init':False}, device_id=uuid)
+        self.gpios_gpio_on.send(params={'gpio':device['gpio'], 'init':False}, device_id=device_uuid)
 
         return True
 
@@ -1001,7 +1001,7 @@ class Gpios(CleepModule):
         if device is None:
             raise CommandError('Device not found')
         if device['mode'] != self.MODE_OUTPUT:
-            raise CommandError('Gpio %s configured as %s cannot be turned off' % (device['uuid'], device['mode']))
+            raise CommandError('Gpio "%s" configured as "%s" cannot be turned off' % (device['gpio'], device['mode']))
 
         # turn off relay
         self.logger.debug('Turn off GPIO %s' % device['gpio'])
@@ -1035,7 +1035,7 @@ class Gpios(CleepModule):
         if device is None:
             raise CommandError('Device not found')
         if device['mode'] == self.MODE_RESERVED:
-            raise CommandError('Gpio %s configured as %s cannot be checked' % (device['uuid'], device['mode']))
+            raise CommandError('Gpio "%s" configured as "%s" cannot be checked' % (device['gpio'], device['mode']))
 
         return device['on']
 
@@ -1044,14 +1044,14 @@ class Gpios(CleepModule):
         Get value of specified gpio. Gpio doesn't have to be declared as device
 
         Args:
-            gpio (string): valid gpio value
+            gpio (string): gpio name
 
         Return:
             bool: True if gpio is on, False otherwise
         """
         # check values
         all_gpios = self.get_raspi_gpios()
-        if gpio not in all_gpios.values():
+        if gpio not in all_gpios.keys():
             raise InvalidParameter('Parameter "gpio" is invalid')
 
         pin = all_gpios[gpio]

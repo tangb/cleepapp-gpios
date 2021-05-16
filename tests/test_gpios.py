@@ -8,7 +8,7 @@ from backend.gpios import Gpios, GpioInputWatcher
 from cleep.exception import InvalidParameter, MissingParameter, CommandError, Unauthorized
 from cleep.libs.tests import session
 import RPi.GPIO as GPIO
-from mock import Mock
+from mock import Mock, patch
 
 class TestGpioInputWatcher(unittest.TestCase):
 
@@ -26,8 +26,14 @@ class TestGpioInputWatcher(unittest.TestCase):
             self.w.join()
         self.session.clean()
 
+    def __on_callback(self, uuid):
+        self.on_cb_count += 1
+
+    def __off_callback(self, uuid, duration):
+        self.off_cb_count += 1
+
     def test_stop(self):
-        self.w._get_input_level = self.__get_input_level_high
+        self.w._get_input_level = Mock(GPIO.HIGH)
         self.w.start()
         time.sleep(1.0)
         self.w.stop()
@@ -38,7 +44,7 @@ class TestGpioInputWatcher(unittest.TestCase):
 
     def test_initial_level_off(self):
         w = GpioInputWatcher(7, '123-456-789-123', self.__on_callback, self.__off_callback, GPIO.LOW)
-        w._get_input_level = self.__get_input_level_high
+        w._get_input_level = Mock(return_value=GPIO.HIGH)
         w.start()
         time.sleep(0.25)
         self.assertEqual(self.on_cb_count, 0)
@@ -48,7 +54,7 @@ class TestGpioInputWatcher(unittest.TestCase):
 
     def test_initial_level_on(self):
         w = GpioInputWatcher(7, '123-456-789-123', self.__on_callback, self.__off_callback, GPIO.HIGH)
-        w._get_input_level = self.__get_input_level_high
+        w._get_input_level = Mock(return_value=GPIO.HIGH)
         w.start()
         time.sleep(0.25)
         self.assertEqual(self.on_cb_count, 1)
@@ -57,39 +63,27 @@ class TestGpioInputWatcher(unittest.TestCase):
         w.join()
 
     def test_callbacks(self):
-        self.w._get_input_level = self.__get_input_level_high
+        self.w._get_input_level = Mock(return_value=GPIO.HIGH)
         self.w.start()
         time.sleep(0.5)
         self.assertEqual(self.on_cb_count, 0)
         self.assertEqual(self.off_cb_count, 1)
 
-        self.w._get_input_level = self.__get_input_level_low
+        self.w._get_input_level.return_value = GPIO.LOW
         time.sleep(0.5)
         self.assertEqual(self.on_cb_count, 1)
         self.assertEqual(self.off_cb_count, 1)
 
-        self.w._get_input_level = self.__get_input_level_high
+        self.w._get_input_level.return_value = GPIO.HIGH
         time.sleep(0.5)
         self.assertEqual(self.on_cb_count, 1)
         self.assertEqual(self.off_cb_count, 2)
 
-        self.w._get_input_level = self.__get_input_level_low
+        self.w._get_input_level.return_value = GPIO.LOW
         time.sleep(0.5)
         self.assertEqual(self.on_cb_count, 2)
         self.assertEqual(self.off_cb_count, 2)
 
-    # MOCKS
-    def __get_input_level_high(self):
-        return GPIO.HIGH
-
-    def __get_input_level_low(self):
-        return GPIO.LOW
-
-    def __on_callback(self, uuid):
-        self.on_cb_count += 1
-
-    def __off_callback(self, uuid, duration):
-        self.off_cb_count += 1
 
 
 class TestGpios(unittest.TestCase):
@@ -98,24 +92,25 @@ class TestGpios(unittest.TestCase):
         logging.basicConfig(level=logging.DEBUG, format=u'%(asctime)s %(name)s:%(lineno)d %(levelname)s : %(message)s')
         self.session = session.TestSession(self)
 
-        self.configure_counter = 0
-        self.deconfigure_counter = 0
-        self.reconfigure_counter = 0
-
         # patch GpioInputWatcher
-        GpioInputWatcher._get_input_level = self.__get_input_level_high
+        GpioInputWatcher._get_input_level = Mock(return_value=GPIO.HIGH)
 
     def tearDown(self):
         self.session.clean()
 
-    def init(self):
+    def init(self, start=True):
         self.module = self.session.setup(Gpios)
-        self.module._gpio_setup = self.__gpio_setup
-        self.original_configure_gpio = self.module._configure_gpio
-        self.original_reconfigure_gpio = self.module._reconfigure_gpio
-        self.original_deconfigure_gpio = self.module._deconfigure_gpio
 
-        self.session.start_module(self.module)
+        if start:
+            self.session.start_module(self.module)
+
+    def check_pin(self, pin):
+        self.assertTrue('gpio' in pin)
+        self.assertTrue('label' in pin)
+        if pin['label'].startswith('GPIO'):
+            self.assertTrue(type(pin['gpio']) is dict)
+            self.assertTrue('assigned' in pin['gpio'])
+            self.assertTrue('owner' in pin['gpio'])
 
     def get_device(self):
         """
@@ -135,8 +130,42 @@ class TestGpios(unittest.TestCase):
             'uuid': 'f0cbd7a2-4228-44a5-944f-e4d4d8d4d63d'
         })
 
+    def test_configure(self):
+        self.init(start=False)
+        devices = {
+            '123-456-789': {
+                'name': 'device1'
+            },
+            '456-789-123': {
+                'name': 'device2'
+            },
+            '789-123-456': {
+                'name': 'device3'
+            }
+        }
+        self.module.get_module_devices = Mock(return_value=devices)
+        self.module._configure_gpio = Mock()
+
+        self.session.start_module(self.module)
+
+        self.assertEqual(self.module._configure_gpio.call_count, len(devices.keys()))
+        self.module._configure_gpio.assert_any_call(devices['123-456-789'])
+        self.module._configure_gpio.assert_any_call(devices['456-789-123'])
+        self.module._configure_gpio.assert_any_call(devices['789-123-456'])
+
+    @patch('backend.gpios.GPIO_output')
+    def test_gpio_output(self, mock_gpio_output):
+        self.init()
+
+        self.module._gpio_output(12, 1)
+        mock_gpio_output.assert_called_with(12, 1)
+
+        self.module._gpio_output(18, 0)
+        mock_gpio_output.assert_called_with(18, 0)
+
     def test_configure_gpio_mode_reserved(self):
         self.init()
+        self.module._gpio_setup = Mock()
         device = self.get_device()
         device['mode'] = 'reserved'
         self.module._gpio_setup = Mock()
@@ -145,6 +174,7 @@ class TestGpios(unittest.TestCase):
         self.assertTrue(self.module._configure_gpio(device))
         self.assertFalse(self.session.event_called('gpios.gpio.on'))
         self.assertFalse(self.module._Gpios__launch_input_watcher.called)
+        self.assertEqual(self.module._gpio_setup.call_count, 0)
 
     def test_configure_gpio_mode_output_on(self):
         self.init()
@@ -267,21 +297,21 @@ class TestGpios(unittest.TestCase):
         usage = self.module.get_pins_usage()
         self.assertEqual(len(usage), 40, 'Number of pins usage is invalid, 40 awaited')
         for pin in usage.values():
-            self.__check_pin(pin)
+            self.check_pin(pin)
 
         config = self.module.get_module_config()
         self.module._get_revision = Mock(return_value=2)
         usage = self.module.get_pins_usage()
         self.assertEqual(len(usage), 26, 'Number of pins usage is invalid, 26 awaited')
         for pin in usage.values():
-            self.__check_pin(pin)
+            self.check_pin(pin)
 
         config = self.module.get_module_config()
         self.module._get_revision = Mock(return_value=1)
         usage = self.module.get_pins_usage()
         self.assertEqual(len(usage), 26, 'Number of pins usage is invalid, 26 awaited')
         for pin in usage.values():
-            self.__check_pin(pin)
+            self.check_pin(pin)
 
     def test_get_pins_usage_with_owner(self):
         self.init()
@@ -391,7 +421,7 @@ class TestGpios(unittest.TestCase):
             self.module.reserve_gpio(data['name'], data['gpio'], data['usage'], data['owner'])
         self.assertEqual(cm.exception.message, 'Unable to add device', 'Should raise exception when add_device failed')
 
-    def test_reserve_gpio_rpcserver_command_sender(self):
+    def test_reserve_gpio_fix_owner(self):
         self.init()
         data = {
             'name': 'dummy',
@@ -493,10 +523,18 @@ class TestGpios(unittest.TestCase):
             'usage': 'test',
             'owner': 'unittest'
         }
+
+        # device reserved
         device = self.module.reserve_gpio(data['name'], data['gpio'], data['usage'], data['owner'])
         self.assertTrue(self.module.is_reserved_gpio(data['gpio']), 'Gpio should be reserved')
+
+        # device not reserved
         self.module.delete_gpio(device['uuid'], data['owner'])
         self.assertFalse(self.module.is_reserved_gpio(data['gpio']), 'Gpio should not be reserved after device deletion')
+
+        # device 
+        self.module.add_gpio(device['uuid'], data['gpio'], 'output', False, False, data['owner'])
+        self.assertFalse(self.module.is_reserved_gpio(data['gpio']))
 
     def test_add_gpio_input(self):
         self.init()
@@ -508,7 +546,7 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._configure_gpio = self.__configure_gpio
+        self.module._gpio_setup = Mock()
 
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
         self.assertTrue(isinstance(device, dict), 'add_gpio returns invalid data type')
@@ -521,7 +559,23 @@ class TestGpios(unittest.TestCase):
         self.assertTrue(device['uuid'] in self.module._input_watchers, 'No input watcher for device')
         self.assertTrue(self.module._input_watchers[device['uuid']].is_alive, 'No input watcher running for device')
         self.assertEqual(len(self.module.get_module_devices()), 1, 'Module should have 1 device stored')
-        self.assertEqual(self.configure_counter, 1, 'configure_gpio should be called once')
+        self.module._gpio_setup.assert_called_with(device['pin'], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+    def test_add_gpio_input_inverted(self):
+        self.init()
+        data = {
+            'name': 'dummy',
+            'gpio': 'GPIO18',
+            'mode': Gpios.MODE_INPUT,
+            'keep': False,
+            'inverted': True,
+            'owner': 'unittest'
+        }
+        self.module._gpio_setup = Mock()
+
+        device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
+        self.assertTrue(device['inverted'])
+        self.module._gpio_setup.assert_called_with(device['pin'], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
     def test_add_gpio_output(self):
         self.init()
@@ -533,7 +587,7 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._configure_gpio = self.__configure_gpio
+        self.module._gpio_setup = Mock()
 
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
         self.assertTrue(type(device) is dict, 'add_gpio returns invalid data type')
@@ -545,7 +599,23 @@ class TestGpios(unittest.TestCase):
         self.assertTrue('uuid' in device and len(device['uuid'])>0, 'Device has no uuid')
         self.assertEqual(len(self.module._input_watchers), 0, 'No input watcher should run for output device')
         self.assertEqual(len(self.module.get_module_devices()), 1, 'Module should have 1 device stored')
-        self.assertEqual(self.configure_counter, 1, 'configure_gpio should be called once')
+        self.module._gpio_setup.assert_called_with(device['pin'], GPIO.OUT, initial=GPIO.HIGH)
+
+    def test_add_gpio_output_inverted(self):
+        self.init()
+        data = {
+            'name': 'dummy',
+            'gpio': 'GPIO18',
+            'mode': Gpios.MODE_OUTPUT,
+            'keep': False,
+            'inverted': True,
+            'owner': 'unittest'
+        }
+        self.module._gpio_setup = Mock()
+
+        device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
+        self.assertEqual(device['inverted'], data['inverted'], 'Device inverted is invalid')
+        self.module._gpio_setup.assert_called_with(device['pin'], GPIO.OUT, initial=GPIO.LOW)
 
     def test_add_gpio_ko_adddevice(self):
         self.init()
@@ -599,8 +669,12 @@ class TestGpios(unittest.TestCase):
         self.assertEqual(cm.exception.message, 'Parameter "mode" is missing')
 
         with self.assertRaises(MissingParameter) as cm:
-            self.module.add_gpio(data['name'], data['mode'], '', data['keep'], data['inverted'], data['owner'])
+            self.module.add_gpio(data['name'], data['gpio'], '', data['keep'], data['inverted'], data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "mode" is missing')
+
+        with self.assertRaises(InvalidParameter) as cm:
+            self.module.add_gpio(data['name'], data['gpio'], 'dummy', data['keep'], data['inverted'], data['owner'])
+        self.assertEqual(cm.exception.message, 'Parameter mode "dummy" is invalid')
 
         with self.assertRaises(MissingParameter) as cm:
             self.module.add_gpio(data['name'], data['gpio'], data['mode'], None, data['inverted'], data['owner'])
@@ -618,6 +692,26 @@ class TestGpios(unittest.TestCase):
             self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], '', data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "inverted" must be bool')
 
+        self.module.add_gpio('already-used-name', 'GPIO19', 'output', False, False, 'test')
+        with self.assertRaises(InvalidParameter) as cm:
+            self.module.add_gpio('already-used-name', data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
+        self.assertEqual(str(cm.exception), 'Name "already-used-name" is already used')
+
+        with self.assertRaises(InvalidParameter) as cm:
+            self.module.add_gpio(data['name'], 'GPIO19', 'input', False, False, 'test')
+        self.assertEqual(str(cm.exception), 'Gpio "GPIO19" is already configured')
+
+    def test_add_gpio_fix_owner(self):
+        self.init()
+        data = {
+            'name': 'dummy',
+            'gpio': 'GPIO18',
+            'usage': 'test',
+            'owner': 'rpcserver'
+        }
+        device = self.module.add_gpio(data['name'], data['gpio'], 'output', False, False, data['owner'])
+        self.assertEqual(device['owner'], 'gpios', 'Device owner is invalid')
+
     def test_delete_gpio_input(self):
         self.init()
         data = {
@@ -628,12 +722,12 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._deconfigure_gpio = self.__deconfigure_gpio
+        self.module._deconfigure_gpio = Mock()
 
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
         self.assertTrue(self.module.delete_gpio(device['uuid'], data['owner']), 'Device should be deleted')
         self.assertEqual(len(self.module.get_module_devices()), 0, 'Module should have device deleted')
-        self.assertEqual(self.deconfigure_counter, 1, 'deconfigure_gpio should be called once')
+        self.module._deconfigure_gpio.assert_called_with(device)
 
     def test_delete_gpio_output(self):
         self.init()
@@ -645,27 +739,12 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._deconfigure_gpio = self.__deconfigure_gpio
+        self.module._deconfigure_gpio = Mock()
 
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
         self.assertTrue(self.module.delete_gpio(device['uuid'], data['owner']), 'Device should be deleted')
         self.assertEqual(len(self.module.get_module_devices()), 0, 'Module should have device deleted')
-        self.assertEqual(self.deconfigure_counter, 1, 'deconfigure_gpio should be called once')
-
-    def test_delete_gpio_ko_deletedevice(self):
-        self.init()
-        data = {
-            'name': 'dummy',
-            'gpio': 'GPIO18',
-            'mode': Gpios.MODE_INPUT,
-            'keep': False,
-            'inverted': False,
-            'owner': 'unittest'
-        }
-
-        device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
-        self.assertTrue(self.module.delete_gpio(device['uuid'], data['owner']), 'Device should be deleted')
-        self.assertEqual(len(self.module.get_module_devices()), 0, 'Module should have device deleted')
+        self.module._deconfigure_gpio.assert_called_with(device)
 
     def test_delete_gpio_bad_owner(self):
         self.init()
@@ -677,12 +756,51 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._deconfigure_gpio = self.__deconfigure_gpio
+        self.module._deconfigure_gpio = Mock()
 
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
         with self.assertRaises(Unauthorized) as cm:
             self.module.delete_gpio(device['uuid'], 'another_owner')
-        self.assertEqual(cm.exception.message, 'Device can only be deleted by module which created it')
+        self.assertEqual(cm.exception.message, 'Device can only be deleted by its owner')
+        
+        self.assertEqual(self.module._deconfigure_gpio.call_count, 0)
+
+    def test_delete_gpio_fix_owner(self):
+        self.init()
+        data = {
+            'name': 'dummy',
+            'gpio': 'GPIO18',
+            'usage': 'test',
+            'owner': 'rpcserver',
+            'mode': 'output',
+        }
+        device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], False, False, data['owner'])
+        self.assertTrue(self.module.delete_gpio(device['uuid'], data['owner']))
+
+    def test_delete_gpio_check_params(self):
+        self.init()
+
+        with self.assertRaises(MissingParameter) as cm:
+            self.module.delete_gpio(None, 'gpios')
+        self.assertEqual(str(cm.exception), 'Parameter "device_uuid" is missing')
+
+        with self.assertRaises(InvalidParameter) as cm:
+            self.module.delete_gpio('123-456-789', 'gpios')
+        self.assertEqual(str(cm.exception), 'Device "123-456-789" does not exist')
+
+        self.module._get_device = Mock(return_value={'uuid': '123-456-789', 'owner': 'dummy'})
+        with self.assertRaises(Unauthorized) as cm:
+            self.module.delete_gpio('123-456-789', 'gpios')
+        self.assertEqual(str(cm.exception), 'Device can only be deleted by its owner')
+
+    def test_delete_gpio_delete_device_failed(self):
+        self.init()
+        self.module._get_device = Mock(return_value={'uuid': '123-456-789', 'owner': 'dummy'})
+        self.module._delete_device = Mock(return_value=False)
+
+        with self.assertRaises(CommandError) as cm:
+            self.module.delete_gpio('123-456-789', 'dummy')
+        self.assertEqual(str(cm.exception), 'Failed to delete device "123-456-789"')
 
     def test_update_gpio(self):
         self.init()
@@ -694,7 +812,7 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._reconfigure_gpio = self.__reconfigure_gpio
+        self.module._reconfigure_gpio = Mock()
 
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
         device = self.module.update_gpio(device['uuid'], 'dummynew', True, True, 'unittest')
@@ -705,10 +823,8 @@ class TestGpios(unittest.TestCase):
         self.assertTrue(device['uuid'] in self.module._input_watchers, 'No input watcher for device')
         self.assertTrue(self.module._input_watchers[device['uuid']].is_alive, 'No input watcher running for device')
         self.assertEqual(len(self.module.get_module_devices()), 1, 'Module should have 1 device stored')
-        self.assertEqual(self.reconfigure_counter, 1, 'reconfigure_gpio should be called once')
+        self.module._reconfigure_gpio.assert_called_with(device)
 
-    def test_update_gpio_ko_updatedevice(self):
-        self.init()
         data = {
             'name': 'dummy',
             'gpio': 'GPIO18',
@@ -719,12 +835,34 @@ class TestGpios(unittest.TestCase):
         }
         self.module._update_device = lambda uuid, data: False
 
-        device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
         with self.assertRaises(CommandError) as cm:
             self.module.update_gpio(device['uuid'], 'dummynew', True, True, 'unittest')
-        self.assertEqual(cm.exception.message, 'Unable to update device "%s"' % device['uuid'])
+        self.assertEqual(cm.exception.message, 'Failed to update device "%s"' % device['uuid'])
 
-    def test_update_gpio_ko_parameters(self):
+    def test_update_gpio_fix_owner(self):
+        self.init()
+        data = {
+            'name': 'dummy',
+            'gpio': 'GPIO18',
+            'mode': Gpios.MODE_INPUT,
+            'keep': False,
+            'inverted': False,
+            'owner': 'gpios'
+        }
+        device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
+        device = self.module.update_gpio(device['uuid'], 'newname', data['keep'], data['inverted'], 'rpcserver')
+        self.assertEqual(device['name'], 'newname')
+
+    def test_update_gpio_update_device_failed(self):
+        self.init()
+        self.module._get_device = Mock(return_value={'uuid': '123-456-789', 'owner': 'dummy'})
+        self.module._update_device = Mock(return_value=False)
+
+        with self.assertRaises(CommandError) as cm:
+            self.module.update_gpio('123-456-789', 'updatedname', False, False, 'dummy')
+        self.assertEqual(str(cm.exception), 'Failed to update device "123-456-789"')
+
+    def test_update_gpio_check_parameters(self):
         self.init()
         data = {
             'name': 'dummy',
@@ -735,6 +873,18 @@ class TestGpios(unittest.TestCase):
             'owner': 'unittest'
         }
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
+
+        with self.assertRaises(MissingParameter) as cm:
+            self.module.update_gpio(None, data['name'], data['keep'], data['inverted'], data['owner'])
+        self.assertEqual(cm.exception.message, 'Parameter "device_uuid" is missing')
+
+        with self.assertRaises(MissingParameter) as cm:
+            self.module.update_gpio('', data['name'], data['keep'], data['inverted'], data['owner'])
+        self.assertEqual(cm.exception.message, 'Parameter "device_uuid" is missing')
+
+        with self.assertRaises(InvalidParameter) as cm:
+            self.module.update_gpio('123-456-789', data['name'], data['keep'], data['inverted'], data['owner'])
+        self.assertEqual(str(cm.exception), 'Device "123-456-789" does not exist')
 
         with self.assertRaises(MissingParameter) as cm:
             self.module.update_gpio(device['uuid'], None, data['keep'], data['inverted'], data['owner'])
@@ -760,6 +910,10 @@ class TestGpios(unittest.TestCase):
             self.module.update_gpio(device['uuid'], data['name'], data['keep'], '', data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "inverted" must be bool')
 
+        with self.assertRaises(Unauthorized) as cm:
+            self.module.update_gpio(device['uuid'], data['name'], data['keep'], data['inverted'], 'dummy')
+        self.assertEqual(cm.exception.message, 'Device can only be updated by its owner')
+
     def test_turn_on(self):
         self.init()
         data = {
@@ -770,12 +924,25 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._gpio_output = self.__gpio_output
+        self.module._gpio_output = Mock()
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
 
         calls = self.session.event_call_count('gpios.gpio.on')
         self.module.turn_on(device['uuid'])
-        self.assertEqual(self.session.event_call_count('gpios.gpio.on'), calls+1, '"gpios.gpio.on" wasn\'t triggered')
+
+        self.session.assert_event_called_with('gpios.gpio.on', {'gpio': 'GPIO18', 'init': False})
+
+    def test_turn_on_check_parameters(self):
+        self.init()
+        
+        with self.assertRaises(CommandError) as cm:
+            self.module.turn_on('123-456-789')
+        self.assertEqual(str(cm.exception), 'Device not found')
+
+        self.module._get_device = Mock(return_value={'name': 'test', 'uuid':'123-456-789', 'mode': 'input', 'gpio': 'GPIO18'})
+        with self.assertRaises(CommandError) as cm:
+            self.module.turn_on('123-456-789')
+        self.assertEqual(str(cm.exception), 'Gpio "GPIO18" configured as "input" cannot be turned on')
 
     def test_turn_off(self):
         self.init()
@@ -787,12 +954,25 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._gpio_output = self.__gpio_output
+        self.module._gpio_output = Mock()
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
 
         calls = self.session.event_call_count('gpios.gpio.off')
         self.module.turn_off(device['uuid'])
-        self.assertEqual(self.session.event_call_count('gpios.gpio.off'), calls+1, '"gpios.gpio.off" wasn\'t triggered')
+
+        self.session.assert_event_called_with('gpios.gpio.off', {'gpio': 'GPIO18', 'init': False, 'duration': 0})
+
+    def test_turn_off_check_parameters(self):
+        self.init()
+        
+        with self.assertRaises(CommandError) as cm:
+            self.module.turn_off('123-456-789')
+        self.assertEqual(str(cm.exception), 'Device not found')
+
+        self.module._get_device = Mock(return_value={'name': 'test', 'uuid':'123-456-789', 'mode': 'input', 'gpio': 'GPIO18'})
+        with self.assertRaises(CommandError) as cm:
+            self.module.turn_off('123-456-789')
+        self.assertEqual(str(cm.exception), 'Gpio "GPIO18" configured as "input" cannot be turned off')
 
     def test_is_on(self):
         self.init()
@@ -804,13 +984,42 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._gpio_output = self.__gpio_output
+        self.module._gpio_output = Mock()
         device = self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
 
         self.assertEqual(self.module.is_on(device['uuid']), False)
 
         self.module.turn_on(device['uuid'])
         self.assertEqual(self.module.is_on(device['uuid']), True)
+
+    def test_is_on_check_parameters(self):
+        self.init()
+        
+        with self.assertRaises(CommandError) as cm:
+            self.module.is_on('123-456-789')
+        self.assertEqual(str(cm.exception), 'Device not found')
+
+        self.module._get_device = Mock(return_value={'name': 'test', 'uuid':'123-456-789', 'mode': 'reserved', 'gpio': 'GPIO18', 'on': False})
+        with self.assertRaises(CommandError) as cm:
+            self.module.is_on('123-456-789')
+        self.assertEqual(str(cm.exception), 'Gpio "GPIO18" configured as "reserved" cannot be checked')
+
+    @patch('backend.gpios.GPIO_input')
+    def test_is_gpio_on(self, mock_gpio_input):
+        self.init()
+
+        mock_gpio_input.return_value = True
+        self.assertTrue(self.module.is_gpio_on('GPIO18'))
+
+        mock_gpio_input.return_value = False
+        self.assertFalse(self.module.is_gpio_on('GPIO18'))
+
+    def test_is_gpio_on_check_parameters(self):
+        self.init()
+
+        with self.assertRaises(InvalidParameter) as cm:
+            self.module.is_gpio_on('hello')
+        self.assertEqual(str(cm.exception), 'Parameter "gpio" is invalid')
 
     def test_reset_gpios(self):
         self.init()
@@ -822,7 +1031,7 @@ class TestGpios(unittest.TestCase):
             'inverted': False,
             'owner': 'unittest'
         }
-        self.module._gpio_output = self.__gpio_output
+        self.module._gpio_output = Mock()
 
         device1 = self.module.add_gpio('name1', 'GPIO18', data['mode'], data['keep'], data['inverted'], data['owner'])
         device2 = self.module.add_gpio('name2', 'GPIO19', data['mode'], data['keep'], data['inverted'], data['owner'])
@@ -835,39 +1044,6 @@ class TestGpios(unittest.TestCase):
         self.assertEqual(self.module.is_on(device2['uuid']), False)
         
 
-
-    # MOCKS
-    def __configure_gpio(self, data):
-        self.configure_counter += 1
-        return self.original_configure_gpio(data)
-
-    def __reconfigure_gpio(self, data):
-        self.reconfigure_counter += 1
-        return self.original_reconfigure_gpio(data)
-
-    def __deconfigure_gpio(self, data):
-        self.deconfigure_counter += 1
-        return self.original_deconfigure_gpio(data)
-
-    def __gpio_setup(self, pin, mode, initial=None, pull_up_down=None):
-        return None
-
-    def __gpio_output(self, pin, level):
-        return None
-
-    def __get_input_level_high(self):
-        return GPIO.HIGH
-
-    def __get_input_level_low(self):
-        return GPIO.LOW
-
-    def __check_pin(self, pin):
-        self.assertTrue('gpio' in pin)
-        self.assertTrue('label' in pin)
-        if pin['label'].startswith('GPIO'):
-            self.assertTrue(type(pin['gpio']) is dict)
-            self.assertTrue('assigned' in pin['gpio'])
-            self.assertTrue('owner' in pin['gpio'])
 
 if __name__ == '__main__':
     # coverage run --omit="*/lib/python*/*","test_*" --concurrency=thread test_gpios.py; coverage report -m -i
