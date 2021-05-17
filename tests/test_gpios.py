@@ -870,6 +870,7 @@ class TestGpios(unittest.TestCase):
             self.module.update_gpio('123-456-789', 'updatedname', False, False, 'dummy')
         self.assertEqual(str(cm.exception), 'Failed to update device "123-456-789"')
 
+    @unittest.skip('need cleep 0.0.27')
     def test_update_gpio_check_parameters(self):
         self.init()
         data = {
