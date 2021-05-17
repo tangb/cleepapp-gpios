@@ -447,17 +447,17 @@ class TestGpios(unittest.TestCase):
             self.module.reserve_gpio(None, data['gpio'], data['usage'], data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "name" is missing')
 
-        with self.assertRaises(MissingParameter) as cm:
+        with self.assertRaises(InvalidParameter) as cm:
             self.module.reserve_gpio('', data['gpio'], data['usage'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "name" is missing')
+        self.assertEqual(cm.exception.message, 'Parameter "name" is invalid (specified="")')
 
         with self.assertRaises(MissingParameter) as cm:
             self.module.reserve_gpio(data['name'], None, data['usage'], data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "gpio" is missing')
 
-        with self.assertRaises(MissingParameter) as cm:
+        with self.assertRaises(InvalidParameter) as cm:
             self.module.reserve_gpio(data['name'], '', data['usage'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "gpio" is missing')
+        self.assertEqual(cm.exception.message, 'Parameter "gpio" is invalid (specified="")')
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.reserve_gpio(data['name'], 'GPIO50', data['usage'], data['owner'])
@@ -467,9 +467,9 @@ class TestGpios(unittest.TestCase):
             self.module.reserve_gpio(data['name'], data['gpio'], None, data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "usage" is missing')
 
-        with self.assertRaises(MissingParameter) as cm:
+        with self.assertRaises(InvalidParameter) as cm:
             self.module.reserve_gpio(data['name'], data['gpio'], '', data['owner'])
-        self.assertEqual(str(cm.exception), 'Parameter "usage" is missing')
+        self.assertEqual(str(cm.exception), 'Parameter "usage" is invalid (specified="")')
 
         self.module.reserve_gpio('onewire-sensor', 'GPIO18', 'onewire', 'test')
         with self.assertRaises(InvalidParameter) as cm:
@@ -650,17 +650,17 @@ class TestGpios(unittest.TestCase):
             self.module.add_gpio(None, data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "name" is missing')
 
-        with self.assertRaises(MissingParameter) as cm:
+        with self.assertRaises(InvalidParameter) as cm:
             self.module.add_gpio('', data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "name" is missing')
+        self.assertEqual(cm.exception.message, 'Parameter "name" is invalid (specified="")')
 
         with self.assertRaises(MissingParameter) as cm:
             self.module.add_gpio(data['name'], None, data['mode'], data['keep'], data['inverted'], data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "gpio" is missing')
 
-        with self.assertRaises(MissingParameter) as cm:
+        with self.assertRaises(InvalidParameter) as cm:
             self.module.add_gpio(data['name'], '', data['mode'], data['keep'], data['inverted'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "gpio" is missing')
+        self.assertEqual(cm.exception.message, 'Parameter "gpio" is invalid (specified="")')
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.add_gpio(data['name'], 'GPIO50', data['mode'], data['keep'], data['inverted'], data['owner'])
@@ -670,13 +670,13 @@ class TestGpios(unittest.TestCase):
             self.module.add_gpio(data['name'], data['gpio'], None, data['keep'], data['inverted'], data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "mode" is missing')
 
-        with self.assertRaises(MissingParameter) as cm:
+        with self.assertRaises(InvalidParameter) as cm:
             self.module.add_gpio(data['name'], data['gpio'], '', data['keep'], data['inverted'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "mode" is missing')
+        self.assertEqual(cm.exception.message, 'Parameter "mode" is invalid (specified="")')
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.add_gpio(data['name'], data['gpio'], 'dummy', data['keep'], data['inverted'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter mode "dummy" is invalid')
+        self.assertEqual(cm.exception.message, 'Parameter "mode" is invalid (specified="dummy")')
 
         with self.assertRaises(MissingParameter) as cm:
             self.module.add_gpio(data['name'], data['gpio'], data['mode'], None, data['inverted'], data['owner'])
@@ -684,7 +684,7 @@ class TestGpios(unittest.TestCase):
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.add_gpio(data['name'], data['gpio'], data['mode'], '', data['inverted'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "keep" must be bool')
+        self.assertEqual(cm.exception.message, 'Parameter "keep" must be of type "bool"')
 
         with self.assertRaises(MissingParameter) as cm:
             self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], None, data['owner'])
@@ -692,7 +692,7 @@ class TestGpios(unittest.TestCase):
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], '', data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "inverted" must be bool')
+        self.assertEqual(cm.exception.message, 'Parameter "inverted" must be of type "bool"')
 
         self.module.add_gpio('already-used-name', 'GPIO19', 'output', False, False, 'test')
         with self.assertRaises(InvalidParameter) as cm:
@@ -880,9 +880,9 @@ class TestGpios(unittest.TestCase):
             self.module.update_gpio(None, data['name'], data['keep'], data['inverted'], data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "device_uuid" is missing')
 
-        with self.assertRaises(MissingParameter) as cm:
+        with self.assertRaises(InvalidParameter) as cm:
             self.module.update_gpio('', data['name'], data['keep'], data['inverted'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "device_uuid" is missing')
+        self.assertEqual(cm.exception.message, 'Parameter "device_uuid" is invalid (specified="")')
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.update_gpio('123-456-789', data['name'], data['keep'], data['inverted'], data['owner'])
@@ -892,9 +892,9 @@ class TestGpios(unittest.TestCase):
             self.module.update_gpio(device['uuid'], None, data['keep'], data['inverted'], data['owner'])
         self.assertEqual(cm.exception.message, 'Parameter "name" is missing')
 
-        with self.assertRaises(MissingParameter) as cm:
+        with self.assertRaises(InvalidParameter) as cm:
             self.module.update_gpio(device['uuid'], '', data['keep'], data['inverted'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "name" is missing')
+        self.assertEqual(cm.exception.message, 'Parameter "name" is invalid (specified="")')
 
         with self.assertRaises(MissingParameter) as cm:
             self.module.update_gpio(device['uuid'], data['name'], None, data['inverted'], data['owner'])
@@ -902,7 +902,7 @@ class TestGpios(unittest.TestCase):
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.update_gpio(device['uuid'], data['name'], '', data['inverted'], data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "keep" must be bool')
+        self.assertEqual(cm.exception.message, 'Parameter "keep" must be of type "bool"')
 
         with self.assertRaises(MissingParameter) as cm:
             self.module.update_gpio(device['uuid'], data['name'], data['keep'], None, data['owner'])
@@ -910,7 +910,7 @@ class TestGpios(unittest.TestCase):
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.update_gpio(device['uuid'], data['name'], data['keep'], '', data['owner'])
-        self.assertEqual(cm.exception.message, 'Parameter "inverted" must be bool')
+        self.assertEqual(cm.exception.message, 'Parameter "inverted" must be of type "bool"')
 
         with self.assertRaises(Unauthorized) as cm:
             self.module.update_gpio(device['uuid'], data['name'], data['keep'], data['inverted'], 'dummy')

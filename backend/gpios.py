@@ -706,24 +706,30 @@ class Gpios(CleepModule):
         if command_sender == 'rpcserver':
             command_sender = 'gpios'
 
-        # search for gpio device
-        found_gpio = self._search_device('gpio', gpio)
-
         # check values
-        if not gpio:
-            raise MissingParameter('Parameter "gpio" is missing')
-        if found_gpio is not None and found_gpio['subtype'] != usage:
-            raise InvalidParameter('Gpio "%s" is already reserved for "%s" usage' % (found_gpio['gpio'], found_gpio['subtype']))
-        if found_gpio is not None and found_gpio['subtype'] == usage:
-            return found_gpio
-        if not name:
-            raise MissingParameter('Parameter "name" is missing')
-        if self._search_device('name', name) is not None:
-            raise InvalidParameter('Name "%s" is already used' % name)
-        if gpio not in self.get_raspi_gpios().keys():
-            raise InvalidParameter('Gpio "%s" does not exist for this raspberry pi' % gpio)
-        if usage is None or len(usage) == 0:
-            raise MissingParameter('Parameter "usage" is missing')
+        if gpio:
+            found_gpio = self._search_device('gpio', gpio)
+            if found_gpio is not None and found_gpio['subtype'] != usage:
+                raise InvalidParameter('Gpio "%s" is already reserved for "%s" usage' % (found_gpio['gpio'], found_gpio['subtype']))
+            if found_gpio is not None and found_gpio['subtype'] == usage:
+                return found_gpio
+        self._check_parameters([
+            {
+                'name': 'name',
+                'value': name,
+                'type': str,
+                'validator': lambda val: self._search_device('name', val) is None,
+                'message': 'Name "%s" is already used' % name,
+            },
+            {
+                'name': 'gpio',
+                'value': gpio,
+                'type': str,
+                'validator': lambda val: val in self.get_raspi_gpios().keys(),
+                'message': 'Gpio "%s" does not exist for this raspberry pi' % gpio,
+            },
+            {'name': 'usage', 'value': usage, 'type': str},
+        ])
 
         # gpio is valid, prepare new entry
         data = {
@@ -808,28 +814,38 @@ class Gpios(CleepModule):
             command_sender = 'gpios'
 
         # check values
-        if not gpio:
-            raise MissingParameter('Parameter "gpio" is missing')
-        if not name:
-            raise MissingParameter('Parameter "name" is missing')
-        if not mode:
-            raise MissingParameter('Parameter "mode" is missing')
-        if keep is None:
-            raise MissingParameter('Parameter "keep" is missing')
-        if inverted is None:
-            raise MissingParameter('Parameter "inverted" is missing')
-        if self._search_device('name', name) is not None:
-            raise InvalidParameter('Name "%s" is already used' % name)
-        if gpio not in self.get_raspi_gpios().keys():
-            raise InvalidParameter('Gpio "%s" does not exist for this raspberry pi' % gpio)
-        if mode not in (self.MODE_INPUT, self.MODE_OUTPUT):
-            raise InvalidParameter('Parameter mode "%s" is invalid' % mode)
-        if self._search_device('gpio', gpio) is not None:
-            raise InvalidParameter('Gpio "%s" is already configured' % gpio)
-        if not isinstance(keep, bool):
-            raise InvalidParameter('Parameter "keep" must be bool')
-        if not isinstance(inverted, bool):
-            raise InvalidParameter('Parameter "inverted" must be bool')
+        self._check_parameters([
+            {
+                'name': 'name',
+                'value': name,
+                'type': str,
+                'validator': lambda val: self._search_device('name', val) is None,
+                'message': 'Name "%s" is already used' % name,
+            },
+            {
+                'name': 'gpio',
+                'value': gpio,
+                'type': str,
+                'validators': [
+                    {
+                        'validator': lambda val: val in self.get_raspi_gpios().keys(),
+                        'message': 'Gpio "%s" does not exist for this raspberry pi' % gpio,
+                    },
+                    {
+                        'validator': lambda val: self._search_device('gpio', gpio) is None,
+                        'message': 'Gpio "%s" is already configured' % gpio
+                    }
+                ],
+            },
+            {
+                'name': 'mode',
+                'value': mode,
+                'type': str,
+                'validator': lambda val: val in (self.MODE_INPUT, self.MODE_OUTPUT)
+            },
+            {'name': 'keep', 'value': keep, 'type': bool},
+            {'name': 'inverted', 'value': inverted, 'type': bool},
+        ])
 
         # gpio is valid, prepare new entry
         data = {
@@ -877,8 +893,9 @@ class Gpios(CleepModule):
             command_sender = 'gpios'
 
         # check values
-        if not device_uuid:
-            raise MissingParameter('Parameter "device_uuid" is missing')
+        self._check_parameters([
+            {'name': 'device_uuid', 'value': device_uuid, 'type': str},
+        ])
         device = self._get_device(device_uuid)
         if device is None:
             raise InvalidParameter('Device "%s" does not exist' % device_uuid)
@@ -918,21 +935,15 @@ class Gpios(CleepModule):
             command_sender = 'gpios'
 
         # check values
-        if not device_uuid:
-            raise MissingParameter('Parameter "device_uuid" is missing')
+        self._check_parameters([
+            {'name': 'device_uuid', 'value': device_uuid, 'type': str},
+            {'name': 'name', 'value': name, 'type': str},
+            {'name': 'keep', 'value': keep, 'type': bool},
+            {'name': 'inverted', 'value': inverted, 'type': bool},
+        ])
         device = self._get_device(device_uuid)
         if device is None:
             raise InvalidParameter('Device "%s" does not exist' % device_uuid)
-        if name is None or len(name) == 0:
-            raise MissingParameter('Parameter "name" is missing')
-        if keep is None:
-            raise MissingParameter('Parameter "keep" is missing')
-        if not isinstance(keep, bool):
-            raise InvalidParameter('Parameter "keep" must be bool')
-        if inverted is None:
-            raise MissingParameter('Parameter "inverted" is missing')
-        if not isinstance(inverted, bool):
-            raise InvalidParameter('Parameter "inverted" must be bool')
         if device['owner'] != command_sender:
             raise Unauthorized('Device can only be updated by its owner')
 
