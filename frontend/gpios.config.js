@@ -4,13 +4,13 @@
  */
 angular
 .module('Cleep')
-.directive('gpiosConfigComponent', ['$rootScope', 'gpiosService', 'raspiotService', 'toastService', 'confirmService', '$mdDialog',
-function($rootScope, gpiosService, raspiotService, toast, confirm, $mdDialog) {
+.directive('gpiosConfigComponent', ['$rootScope', 'gpiosService', 'cleepService', 'toastService', 'confirmService', '$mdDialog',
+function($rootScope, gpiosService, cleepService, toast, confirm, $mdDialog) {
 
     var gpiosConfigController = function() {
         var self = this;
         self.raspiGpios = [];
-        self.devices = raspiotService.devices;
+        self.devices = cleepService.devices;
         self.name = '';
         self.mode = 'input';
         self.keep = false;
@@ -55,7 +55,7 @@ function($rootScope, gpiosService, raspiotService, toast, confirm, $mdDialog) {
             return $mdDialog.show({
                 controller: function() { return self; },
                 controllerAs: 'gpiosCtl',
-                templateUrl: 'addGpio.config.html',
+                templateUrl: 'addGpio.dialog.html',
                 parent: angular.element(document.body),
                 clickOutsideToClose: false,
                 fullscreen: true
@@ -121,7 +121,7 @@ function($rootScope, gpiosService, raspiotService, toast, confirm, $mdDialog) {
          * Init controller
          */
         self.$onInit = function() {
-            raspiotService.getModuleConfig('gpios')
+            cleepService.getModuleConfig('gpios')
                 .then(function(config) {
                     self.raspiGpios = config.raspi_gpios;
                 });

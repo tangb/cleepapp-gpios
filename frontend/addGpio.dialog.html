@@ -15,12 +15,12 @@
 
         <md-dialog-content>
         <div class="md-dialog-content">
-            <md-input-container class="md-block" flex-gt-sm>
-                <label>Name</label>
+            <md-input-container class="md-block no-error-spacer" flex-gt-sm>
+                <label>Gpio name</label>
                 <input ng-model="gpiosCtl.name">
             </md-input-container>
             <div>
-                <div gpios-pins-config readonly="gpiosCtl.updateDevice" selected-gpios="gpiosCtl.selectedGpios"></div>
+                <div gpios-pins-component readonly="gpiosCtl.updateDevice" selected-gpios="gpiosCtl.selectedGpios"></div>
             </div>
             <md-input-container class="md-block" flex-gt-sm>
                 <label>Mode</label>
@@ -46,9 +46,13 @@
 
         <md-dialog-actions layout="row">
             <span flex></span>
-            <md-button ng-click="gpiosCtl.closeDialog()" aria-label="Add or update device" class="md-primary">
-                <span ng-if="!gpiosCtl.updateDevice">Add gpio</span>
-                <span ng-if="gpiosCtl.updateDevice">Update gpio</span>
+            <md-button ng-if="!gpiosCtl.updateDevice" ng-click="gpiosCtl.closeDialog()" aria-label="Add or update device" class="md-primary">
+                <md-icon md-svg-icon="plus"></md-icon>
+                <span>Add gpio</span>
+            </md-button>
+            <md-button ng-if="gpiosCtl.updateDevice" ng-click="gpiosCtl.closeDialog()" aria-label="Add or update device" class="md-primary">
+                <md-icon md-svg-icon="pencil"></md-icon>
+                <span>Update gpio</span>
             </md-button>
         </md-dialog-actions>
 

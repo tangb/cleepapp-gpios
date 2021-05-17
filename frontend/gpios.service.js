@@ -4,8 +4,8 @@
  */
 angular
 .module('Cleep')
-.service('gpiosService', ['$q', '$rootScope', 'rpcService', 'raspiotService',
-function($q, $rootScope, rpcService, raspiotService) {
+.service('gpiosService', ['$q', '$rootScope', 'rpcService', 'cleepService',
+function($q, $rootScope, rpcService, cleepService) {
     var self = this;
     
     /**
@@ -49,7 +49,7 @@ function($q, $rootScope, rpcService, raspiotService) {
     self.addGpio = function(name, gpio, mode, keep, inverted) {
         return rpcService.sendCommand('add_gpio', 'gpios', {'name':name, 'gpio':gpio, 'mode':mode, 'keep':keep, 'inverted':inverted})
             .then(function(resp) {
-                return $q.all(raspiotService.reloadModuleConfig('gpios'), raspiotService.reloadDevices());
+                return $q.all(cleepService.reloadModuleConfig('gpios'), cleepService.reloadDevices());
             })
     };
 
@@ -57,9 +57,9 @@ function($q, $rootScope, rpcService, raspiotService) {
      * Delete gpio
      */
     self.deleteGpio = function(uuid) {
-        return rpcService.sendCommand('delete_gpio', 'gpios', {'uuid':uuid})
+        return rpcService.sendCommand('delete_gpio', 'gpios', {'device_uuid':uuid})
             .then(function(resp) {
-                return $q.all(raspiotService.reloadModuleConfig('gpios'), raspiotService.reloadDevices());
+                return $q.all(cleepService.reloadModuleConfig('gpios'), cleepService.reloadDevices());
             });
     };
 
@@ -67,9 +67,9 @@ function($q, $rootScope, rpcService, raspiotService) {
      * Update device
      */
     self.updateGpio = function(uuid, name, keep, inverted) {
-        return rpcService.sendCommand('update_gpio', 'gpios', {'uuid':uuid, 'name':name, 'keep':keep, 'inverted':inverted})
+        return rpcService.sendCommand('update_gpio', 'gpios', {'device_uuid':uuid, 'name':name, 'keep':keep, 'inverted':inverted})
             .then(function(resp) {
-                return $q.all(raspiotService.reloadModuleConfig('gpios'), raspiotService.reloadDevices());
+                return $q.all(cleepService.reloadModuleConfig('gpios'), cleepService.reloadDevices());
             });
     };
 
@@ -77,25 +77,25 @@ function($q, $rootScope, rpcService, raspiotService) {
      * Turn on specified gpio
      */
     self.turnOn = function(uuid) {
-        return rpcService.sendCommand('turn_on', 'gpios', {'uuid':uuid});
+        return rpcService.sendCommand('turn_on', 'gpios', {'device_uuid':uuid});
     };
 
     /**
      * Turn off specified gpio
      */
     self.turnOff = function(uuid) {
-        return rpcService.sendCommand('turn_off', 'gpios', {'uuid':uuid});
+        return rpcService.sendCommand('turn_off', 'gpios', {'device_uuid':uuid});
     };
 
     /**
      * Catch gpio on events
      */
     $rootScope.$on('gpios.gpio.on', function(event, uuid, params) {
-        for( var i=0; i<raspiotService.devices.length; i++ ) {
-            if( raspiotService.devices[i].uuid==uuid ) {
-                if( raspiotService.devices[i].on===false ) {
-                    raspiotService.devices[i].on = true;
-                    raspiotService.devices[i].__widget.mdcolors = '{background:"default-accent-400"}';
+        for( var i=0; i<cleepService.devices.length; i++ ) {
+            if( cleepService.devices[i].uuid==uuid ) {
+                if( cleepService.devices[i].on===false ) {
+                    cleepService.devices[i].on = true;
+                    cleepService.devices[i].__widget.mdcolors = '{background:"default-accent-400"}';
                     break;
                 }
             }
@@ -106,11 +106,11 @@ function($q, $rootScope, rpcService, raspiotService) {
      * Catch gpio off events
      */
     $rootScope.$on('gpios.gpio.off', function(event, uuid, params) {
-        for( var i=0; i<raspiotService.devices.length; i++ ) {
-            if( raspiotService.devices[i].uuid==uuid ) {
-                if( raspiotService.devices[i].on===true ) {
-                    raspiotService.devices[i].on = false;
-                    raspiotService.devices[i].__widget.mdcolors = '{background:"default-primary-300"}';
+        for( var i=0; i<cleepService.devices.length; i++ ) {
+            if( cleepService.devices[i].uuid==uuid ) {
+                if( cleepService.devices[i].on===true ) {
+                    cleepService.devices[i].on = false;
+                    cleepService.devices[i].__widget.mdcolors = '{background:"default-primary-300"}';
                     break;
                 }
             }

@@ -162,13 +162,11 @@ class Gpios(CleepModule):
     """
     MODULE_AUTHOR = 'Cleep'
     MODULE_VERSION = '1.1.1'
-    MODULE_PRICE = 0
     MODULE_DEPS = []
     MODULE_DESCRIPTION = 'Configure your raspberry pins'
     MODULE_LONGDESCRIPTION = 'Gives you access to raspberry pins to configure your inputs/ouputs as you wish quickly and easily.'
     MODULE_TAGS = ['gpios', 'inputs', 'outputs']
     MODULE_CATEGORY = 'DRIVER'
-    MODULE_COUNTRY = None
     MODULE_URLINFO = 'https://github.com/tangb/cleepmod-gpios'
     MODULE_URLHELP = 'https://github.com/tangb/cleepmod-gpios/wiki'
     MODULE_URLSITE = None
@@ -984,12 +982,12 @@ class Gpios(CleepModule):
 
         return True
 
-    def turn_off(self, uuid):
+    def turn_off(self, device_uuid):
         """
         Turn off specified device
 
         Args:
-            uuid (string): device identifier
+            device_uuid (string): device identifier
 
         Returns:
             bool: True if command executed successfully
@@ -997,7 +995,7 @@ class Gpios(CleepModule):
         Raises:
             CommandError
         """
-        device = self._get_device(uuid)
+        device = self._get_device(device_uuid)
         if device is None:
             raise CommandError('Device not found')
         if device['mode'] != self.MODE_OUTPUT:
@@ -1010,19 +1008,19 @@ class Gpios(CleepModule):
         # save current state
         device['on'] = False
         if device['keep']:
-            self._update_device(uuid, device)
+            self._update_device(device_uuid, device)
 
         # broadcast event
-        self.gpios_gpio_off.send(params={'gpio':device['gpio'], 'init':False, 'duration':0}, device_id=uuid)
+        self.gpios_gpio_off.send(params={'gpio':device['gpio'], 'init':False, 'duration':0}, device_id=device_uuid)
 
         return True
 
-    def is_on(self, uuid):
+    def is_on(self, device_uuid):
         """
         Return gpio status (on or off)
 
         Args:
-            uuid (string): device identifier
+            device_uuid (string): device identifier
 
         Returns:
             bool: True if device is on, False if device is off
@@ -1031,7 +1029,7 @@ class Gpios(CleepModule):
             CommandError
         """
         # check values
-        device = self._get_device(uuid)
+        device = self._get_device(device_uuid)
         if device is None:
             raise CommandError('Device not found')
         if device['mode'] == self.MODE_RESERVED:

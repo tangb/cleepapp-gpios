@@ -5,8 +5,8 @@
  */
 angular
 .module('Cleep')
-.directive('gpiosPinsComponent', ['raspiotService', 'gpiosService', 'toastService', 'confirmService',
-function(raspiotService, gpiosService, toast, confirm) {
+.directive('gpiosPinsComponent', ['gpiosService', 'toastService', 'confirmService',
+function(gpiosService, toast, confirm) {
 
     var gpiosPinsController = ['$scope', function($scope) {
         var self = this;

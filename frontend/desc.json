@@ -7,6 +7,6 @@
     },
     "config": {
         "js": ["gpios.config.js"],
-        "html": ["gpios.config.html", "addGpio.config.html"]
+        "html": ["gpios.config.html", "addGpio.dialog.html"]
     }
 }
