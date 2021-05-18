@@ -337,10 +337,6 @@ class Gpios(CleepModule):
         # members
         self._input_watchers = {}
 
-        # configure raspberry pi
-        GPIO_setmode(GPIO_BOARD)
-        GPIO_setwarnings(False)
-
         # events
         self.gpios_gpio_off = self._get_event('gpios.gpio.off')
         self.gpios_gpio_on = self._get_event('gpios.gpio.on')
@@ -374,7 +370,15 @@ class Gpios(CleepModule):
 
     def _configure(self):
         """
-        Configure module
+        Configure application
+        """
+        # configure raspberry pi
+        GPIO_setmode(GPIO_BOARD)
+        GPIO_setwarnings(False)
+
+    def _on_start(self):
+        """
+        Start application
         """
         # configure gpios
         devices = self.get_module_devices()
@@ -383,7 +387,7 @@ class Gpios(CleepModule):
 
     def _on_stop(self):
         """
-        Stop module
+        Stop application
         """
         # stop input watchers
         for uuid in self._input_watchers:
