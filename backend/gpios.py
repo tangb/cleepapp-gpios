@@ -51,14 +51,14 @@ class GpioInputWatcher(Thread):
             off_callback (function): off callback
             level (RPi.GPIO.LOW|RPi.GPIO.HIGH): triggered level
         """
-        #init
+        # init
         Thread.__init__(self)
         Thread.daemon = True
         self.logger = logging.getLogger('Gpios')
-        #self.logger.setLevel(logging.DEBUG)
+        # self.logger.setLevel(logging.DEBUG)
         self.uuid = uuid
 
-        #members
+        # members
         self.continu = True
         self.pin = pin
         self.level = level
@@ -88,15 +88,14 @@ class GpioInputWatcher(Thread):
         last_level = None
         time_on = 0
 
-        #send current level
-
+        # send current level
         try:
             while self.continu:
-                #get level
+                # get level
                 level = self._get_input_level()
 
                 if last_level is None:
-                    #first iteration, send initial value
+                    # first iteration, send initial value
                     if self.level == GPIO_LOW:
                         self.off_callback(self.uuid, 0)
                     else:
@@ -116,7 +115,7 @@ class GpioInputWatcher(Thread):
                 else:
                     time.sleep(0.125)
 
-                #update last level
+                # update last level
                 last_level = level
         except Exception: # pragma: no cover
             self.logger.exception('Exception in GpioInputWatcher:')
@@ -341,33 +340,6 @@ class Gpios(CleepModule):
         self.gpios_gpio_off = self._get_event('gpios.gpio.off')
         self.gpios_gpio_on = self._get_event('gpios.gpio.on')
 
-    def _gpio_setup(self, pin, mode, initial=None, pull_up_down=None): # pragma: no cover
-        """
-        Gpio setup
-
-        Args:
-            pin (number): pin number
-            mode (?): pin mode
-            initial (?): ?
-            pull_up_mode (?): ?
-        """
-        if initial is None and pull_up_down is None:
-            GPIO_setup(pin, mode)
-        elif initial is None:
-            GPIO_setup(pin, mode, pull_up_down=pull_up_down)
-        elif pull_up_down is None:
-            GPIO_setup(pin, mode, initial=initial)
-
-    def _gpio_output(self, pin, level):
-        """
-        Set gpio output level
-
-        Args:
-            pin (int): pin number
-            level (int): RPi.GPIO.LOW or RPi.GPIO.HIGH
-        """
-        GPIO_output(pin, level)
-
     def _configure(self):
         """
         Configure application
@@ -395,6 +367,33 @@ class Gpios(CleepModule):
 
         # cleanup gpios
         GPIO_cleanup()
+
+    def _gpio_setup(self, pin, mode, initial=None, pull_up_down=None): # pragma: no cover
+        """
+        Gpio setup
+
+        Args:
+            pin (number): pin number
+            mode (?): pin mode
+            initial (?): ?
+            pull_up_mode (?): ?
+        """
+        if initial is None and pull_up_down is None:
+            GPIO_setup(pin, mode)
+        elif initial is None:
+            GPIO_setup(pin, mode, pull_up_down=pull_up_down)
+        elif pull_up_down is None:
+            GPIO_setup(pin, mode, initial=initial)
+
+    def _gpio_output(self, pin, level):
+        """
+        Set gpio output level
+
+        Args:
+            pin (int): pin number
+            level (int): RPi.GPIO.LOW or RPi.GPIO.HIGH
+        """
+        GPIO_output(pin, level)
 
     def __launch_input_watcher(self, device):
         """
@@ -778,7 +777,7 @@ class Gpios(CleepModule):
         Return True if gpio is reserved
 
         Args:
-            uuid (string): device uuid
+            gpio (string): gpio
 
         Returns:
             bool: True if gpio is reserved, False otherwise
@@ -1064,8 +1063,14 @@ class Gpios(CleepModule):
         """
         # check values
         all_gpios = self.get_raspi_gpios()
-        if gpio not in all_gpios.keys():
-            raise InvalidParameter('Parameter "gpio" is invalid')
+        self._check_parameters([
+            {
+                'name': 'gpio',
+                'value': gpio,
+                'type': str,
+                'validator': lambda val: gpio in all_gpios.keys(),
+            },
+        ])
 
         pin = all_gpios[gpio]
         self.logger.debug('Read value for gpio "%s" (pin %s)' % (gpio, pin))

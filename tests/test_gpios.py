@@ -1028,7 +1028,7 @@ class TestGpios(unittest.TestCase):
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.is_gpio_on('hello')
-        self.assertEqual(str(cm.exception), 'Parameter "gpio" is invalid')
+        self.assertEqual(str(cm.exception), 'Parameter "gpio" is invalid (specified="hello")')
 
     def test_reset_gpios(self):
         self.init()

@@ -2,7 +2,8 @@
 
 ## v1.1.2 - 2021-05-18 UNRELEASED
 
-* Backend: fix issue at startup with gpio configured
+* Fix issue at startup with gpio configured
+* Improve command parameters check
 
 ## v1.1.1 - 2021-05-16
 
