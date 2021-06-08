@@ -160,7 +160,7 @@ class Gpios(CleepModule):
     Raspberry pi gpios class
     """
     MODULE_AUTHOR = 'Cleep'
-    MODULE_VERSION = '1.1.1'
+    MODULE_VERSION = '1.1.2'
     MODULE_DEPS = []
     MODULE_DESCRIPTION = 'Configure your raspberry pins'
     MODULE_LONGDESCRIPTION = 'Gives you access to raspberry pins to configure your inputs/ouputs as you wish quickly and easily.'

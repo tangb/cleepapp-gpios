@@ -178,7 +178,6 @@ class TestGpios(unittest.TestCase):
         self.assertFalse(self.module._Gpios__launch_input_watcher.called)
         self.assertEqual(self.module._gpio_setup.call_count, 0)
 
-    @unittest.skip('need cleep 0.0.27')
     def test_configure_gpio_mode_output_on(self):
         self.init()
         self.module._gpio_setup = Mock()
@@ -192,7 +191,6 @@ class TestGpios(unittest.TestCase):
         self.session.assert_event_called_with('gpios.gpio.on', {'gpio': 'GPIO18', 'init': True}, device_id='f0cbd7a2-4228-44a5-944f-e4d4d8d4d63d')
         self.assertFalse(self.module._Gpios__launch_input_watcher.called)
 
-    @unittest.skip('need cleep 0.0.27')
     def test_configure_gpio_mode_output_off(self):
         self.init()
         self.module._gpio_setup = Mock()
@@ -245,7 +243,6 @@ class TestGpios(unittest.TestCase):
         self.assertFalse(self.session.event_called('gpios.gpio.on'))
         self.assertFalse(self.module._Gpios__launch_input_watcher.called)
 
-    @unittest.skip('need cleep 0.0.27')
     def test_input_on_callback(self):
         self.init()
         device = self.get_device()
@@ -264,7 +261,6 @@ class TestGpios(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Device "123456789" not found')
         self.assertFalse(self.session.event_called('gpios.gpio.on'))
 
-    @unittest.skip('need cleep 0.0.27')
     def test_input_off_callback(self):
         self.init()
         device = self.get_device()
@@ -438,7 +434,6 @@ class TestGpios(unittest.TestCase):
         device = self.module.reserve_gpio(data['name'], data['gpio'], data['usage'], data['owner'])
         self.assertEqual(device['owner'], 'gpios', 'Device owner is invalid')
 
-    @unittest.skip('need cleep 0.0.27')
     def test_reserve_gpio_ko_parameters(self):
         self.init()
         data = {
@@ -640,7 +635,6 @@ class TestGpios(unittest.TestCase):
             self.module.add_gpio(data['name'], data['gpio'], data['mode'], data['keep'], data['inverted'], data['owner'])
         self.assertEqual(cm.exception.message, 'Unable to add device', 'Should raise exception when add_device failed')
 
-    @unittest.skip('need cleep 0.0.27')
     def test_add_gpio_ko_parameters(self):
         self.init()
         data = {
@@ -870,7 +864,6 @@ class TestGpios(unittest.TestCase):
             self.module.update_gpio('123-456-789', 'updatedname', False, False, 'dummy')
         self.assertEqual(str(cm.exception), 'Failed to update device "123-456-789"')
 
-    @unittest.skip('need cleep 0.0.27')
     def test_update_gpio_check_parameters(self):
         self.init()
         data = {
@@ -1062,7 +1055,6 @@ class TestsGpiosGpioOnEvent(unittest.TestCase):
         self.session = session.TestSession(self)
         self.event = self.session.setup_event(GpiosGpioOnEvent)
 
-    @unittest.skip('need cleep 0.0.27')
     def test_event_params(self):
         self.assertCountEqual(self.event.EVENT_PARAMS, ['gpio', 'init'])
 
@@ -1076,7 +1068,6 @@ class TestsGpiosGpioOffEvent(unittest.TestCase):
         self.session = session.TestSession(self)
         self.event = self.session.setup_event(GpiosGpioOffEvent)
 
-    @unittest.skip('need cleep 0.0.27')
     def test_event_params(self):
         self.assertCountEqual(self.event.EVENT_PARAMS, ['gpio', 'duration', 'init'])
         
