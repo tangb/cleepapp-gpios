@@ -87,34 +87,5 @@ function($q, $rootScope, rpcService, cleepService) {
         return rpcService.sendCommand('turn_off', 'gpios', {'device_uuid':uuid});
     };
 
-    /**
-     * Catch gpio on events
-     */
-    $rootScope.$on('gpios.gpio.on', function(event, uuid, params) {
-        for( var i=0; i<cleepService.devices.length; i++ ) {
-            if( cleepService.devices[i].uuid==uuid ) {
-                if( cleepService.devices[i].on===false ) {
-                    cleepService.devices[i].on = true;
-                    cleepService.devices[i].__widget.mdcolors = '{background:"default-accent-400"}';
-                    break;
-                }
-            }
-        }
-    });
-
-    /**
-     * Catch gpio off events
-     */
-    $rootScope.$on('gpios.gpio.off', function(event, uuid, params) {
-        for( var i=0; i<cleepService.devices.length; i++ ) {
-            if( cleepService.devices[i].uuid==uuid ) {
-                if( cleepService.devices[i].on===true ) {
-                    cleepService.devices[i].on = false;
-                    cleepService.devices[i].__widget.mdcolors = '{background:"default-primary-300"}';
-                    break;
-                }
-            }
-        }
-    });
 }]);
 
