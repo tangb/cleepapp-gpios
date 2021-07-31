@@ -1,6 +1,6 @@
 # Changelog
 
-## [UNRELEASED]
+## [1.1.3] - 2021-07-31
 
 ### Changed
 * Frontend service doesn't have to catch update events
