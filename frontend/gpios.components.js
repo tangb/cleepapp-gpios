@@ -96,7 +96,6 @@ angular
         ctrl.$onInit = function () {
             cleepService.getModuleConfig('gpios')
                 .then((config)=> {
-                    console.log('config', config);
                     ctrl.boardRevision = config.revision;
                 });
             gpiosService.getPinsUsage()
