@@ -10,17 +10,29 @@ function($rootScope, gpiosService, cleepService, toast, confirm, $mdDialog) {
     var gpiosConfigController = function() {
         var self = this;
         self.raspiGpios = [];
-        self.devices = cleepService.devices;
+        self.devices = [];
         self.name = '';
         self.mode = 'input';
         self.keep = false;
         self.inverted = false;
-        self.updateDevice = false;
+        self.gpioUpdate = false;
         self.selectedGpios = [{gpio:null, 'label':'wire'}];
 
-        /**
-         * Reset editor's values
-         */
+        self.$onInit = function() {
+            cleepService.getModuleConfig('gpios')
+                .then(function(config) {
+                    self.raspiGpios = config.raspi_gpios;
+                });
+
+            // add module actions to fabButton
+            var actions = [{
+                icon: 'plus',
+                callback: self.openAddDialog,
+                tooltip: 'Add gpio'
+            }];
+            $rootScope.$broadcast('enableFab', actions);
+        };
+
         self._resetValues = function() {
             self.name = '';
             self.selectedGpios = [{gpio:null, 'label':'wire'}];
@@ -29,44 +41,32 @@ function($rootScope, gpiosService, cleepService, toast, confirm, $mdDialog) {
             self.inverted = false;
         };
 
-        /**
-         * Close dialog
-         */
         self.closeDialog = function() {
             // check values
-            if( self.name.length===0 ) {
+            if (self.name.length === 0) {
                 toast.error('All fields are required');
             } else {
                 $mdDialog.hide();
             }
         };
 
-        /**
-         * Cancel dialog
-         */
         self.cancelDialog = function() {
             $mdDialog.cancel();
         };
 
-        /**
-         * Open dialog (internal use)
-         */
         self._openDialog = function() {
             return $mdDialog.show({
                 controller: function() { return self; },
-                controllerAs: 'gpiosCtl',
-                templateUrl: 'addGpio.dialog.html',
+                controllerAs: '$ctrl',
+                templateUrl: 'gpio.dialog.html',
                 parent: angular.element(document.body),
                 clickOutsideToClose: false,
                 fullscreen: true
             });
         };
         
-        /**
-         * Add device
-         */
         self.openAddDialog = function() {
-            self.updateDevice = false;
+            self.gpioUpdate = false;
             self._openDialog()
                 .then(function() {
                     return gpiosService.addGpio(self.name, self.selectedGpios[0].gpio, self.mode, self.keep, self.inverted);
@@ -79,9 +79,6 @@ function($rootScope, gpiosService, cleepService, toast, confirm, $mdDialog) {
                 });
         }; 
 
-        /**
-         * Update device
-         */
         self.openUpdateDialog = function(device) {
             // set editor's value
             self.name = device.name;
@@ -91,7 +88,7 @@ function($rootScope, gpiosService, cleepService, toast, confirm, $mdDialog) {
             self.inverted = device.inverted;
 
             // open dialog
-            self.updateDevice = true;
+            self.gpioUpdate = true;
             self._openDialog()
                 .then(function() {
                     return gpiosService.updateGpio(device.uuid, self.name, self.keep, self.inverted);
@@ -104,9 +101,6 @@ function($rootScope, gpiosService, cleepService, toast, confirm, $mdDialog) {
                 });
         };
 
-        /**
-         * Delete device
-         */
         self.openDeleteDialog = function(device) {
             confirm.open('Delete gpio?', null, 'Delete')
                 .then(function() {
@@ -117,22 +111,43 @@ function($rootScope, gpiosService, cleepService, toast, confirm, $mdDialog) {
                 });
         };
 
-        /**
-         * Init controller
-         */
-        self.$onInit = function() {
-            cleepService.getModuleConfig('gpios')
-                .then(function(config) {
-                    self.raspiGpios = config.raspi_gpios;
-                });
+        $rootScope.$watchCollection(
+            () => cleepService.devices,
+            (newDevices) => {
+                if (Object.keys(newDevices || {}).length) {
+                    self.devices = newDevices
+                        .filter((device) => device.module === 'gpios')
+                        .map((device) => ({
+                            icon: 'video-input-component',
+                            title: self.getDeviceTitle(device),
+                            subtitle: self.getDeviceSubtitle(device),
+                            clicks: [
+                                {
+                                    icon: 'pencil',
+                                    tooltip: (device.owner === 'gpios' ? 'Edit' : 'Gpios app is not owner of the gpio'),
+                                    disabled: device.owner !== 'gpios',
+                                    click: self.openUpdateDialog,
+                                    meta: { device },
+                                },
+                                {
+                                    icon: 'delete',
+                                    tooltip: (device.owner === 'gpios' ? 'Delete' : 'Gpios app is not owner of the gpio'),
+                                    disabled: device.owner !== 'gpios',
+                                    click: self.openDeleteDialog,
+                                    meta: { device },
+                                }
+                            ],
+                        }));
+                }
+            },
+        );
 
-            // add module actions to fabButton
-            var actions = [{
-                icon: 'plus',
-                callback: self.openAddDialog,
-                tooltip: 'Add gpio'
-            }]; 
-            $rootScope.$broadcast('enableFab', actions);
+        self.getDeviceTitle = function (device) {
+            return '<strong>' + device.name + '</strong>: current value ' + (device.on ? 'ON' : 'OFF');
+        };
+
+        self.getDeviceSubtitle = function (device) {
+            return 'Gpio: ' + device.gpio + ', mode: ' + device.mode + ', save state: ' + device.keep + ', inverted: ' + device.inverted;
         };
     };
 

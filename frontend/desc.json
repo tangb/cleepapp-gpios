@@ -1,12 +1,49 @@
 {
     "icon": "drag-horizontal",
     "global": {
-        "js": ["gpio.widget.js", "gpiosPins/gpiosPins.component.js", "gpios.service.js"],
-        "html": ["gpio.widget.html", "gpiosPins/gpiosPins.component.html"],
-        "css": ["gpiosPins/gpiosPins.component.css"]
+        "js": ["gpios.service.js", "gpios.components.js"],
+        "css": ["gpios.components.css"]
     },
     "config": {
         "js": ["gpios.config.js"],
-        "html": ["gpios.config.html", "addGpio.dialog.html"]
+        "html": ["gpios.config.html", "gpio.dialog.html"]
+    },
+    "widgets": {
+        "gpio" : {
+            "header": {
+                "icon": "video-input-component"
+            },
+            "content": [
+                {
+                    "icon": "circle",
+                    "condition": {
+                        "variable": "device.on",
+                        "operator": "===",
+                        "value": "true"
+                    }
+                },
+                {
+                    "icon": "circle-outline",
+                    "condition": {
+                        "variable": "device.on",
+                        "operator": "===",
+                        "value": "false"
+                    }
+                },
+                {
+                    "attr": "on",
+                    "trueLabel": "ON",
+                    "falseLabel": "OFF"
+                }
+            ],
+            "footer": [
+                {
+                    "type": "text",
+                    "icon": "cog-outline",
+                    "attr": "subtype",
+                    "tooltip": "Gpio mode"
+                }
+            ]
+        }
     }
 }

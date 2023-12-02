@@ -1,0 +1,59 @@
+<md-dialog flex="50">
+
+    <md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2 ng-if="!$ctrl.gpioUpdate">Add new gpio</h2>
+            <h2 ng-if="$ctrl.gpioUpdate">Update gpio</h2>
+            <span flex></span>
+            <md-button class="md-icon-button" ng-click="$ctrl.cancelDialog()">
+                <cl-icon cl-icon="close"></cl-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+
+    <md-dialog-content>
+        <div class="md-dialog-content">
+            <config-text
+                cl-title="Gpio name" cl-required="true" cl-placeholder="Gpio name"
+                cl-model="$ctrl.name"
+            ></config-text>
+            <config-select
+                cl-title="Gpio mode" cl-model="$ctrl.mode" cl-disabled="$ctrl.gpioUpdate"
+                cl-options="['input', 'output']"
+            ></config-select>
+            <config-switch
+                cl-title="Save state to restore it after reboot?"
+                cl-model="$ctrl.keep"
+            ></config-switch>
+            <config-switch
+                cl-title="Gpio state is inverted?"
+                cl-model="$ctrl.inverted"
+            ></config-switch>
+
+            <config-gpios-pins
+                cl-title="Gpios pins configuration"
+                selected-gpios="$ctrl.selectedGpios" readonly="$ctrl.gpioUpdate"
+            ></config-gpios-pins>
+
+        <div>
+            <div gpios-pins-component readonly="$ctrl.gpioUpdate" selected-gpios="$ctrl.selectedGpios"></div>
+        </div>
+    </div>
+    </md-dialog-content>
+
+    <md-dialog-actions layout="row">
+        <span flex></span>
+        <md-button ng-if="!$ctrl.gpioUpdate" ng-click="$ctrl.closeDialog()" class="md-primary md-raised">
+            <cl-icon cl-icon="plus"></cl-icon>
+            <span>Add gpio</span>
+        </md-button>
+        <md-button ng-if="$ctrl.gpioUpdate" ng-click="$ctrl.closeDialog()" class="md-primary md-raised">
+            <cl-icon cl-icon="pencil"></cl-icon>
+            <span>Update gpio</span>
+        </md-button>
+    </md-dialog-actions>
+
+    <span>{{$ctrl.config.raspi_gpios}}</span>
+
+</md-dialog>
+

@@ -1,12 +1,12 @@
-.board-text-readonly {
+.grpios-board-text-readonly {
     color: #9B9B9B;
 }
 
-.board-text {
+.gpios-board-text {
     font-size: 14px;
 }
 
-.board-rev1, .board-rev2 {
+.gpios-board-rev1, .gpios-board-rev2 {
     width: 446px;
     background-color: #008500;
     padding-top: 38px;
@@ -17,7 +17,7 @@
     height:64px;
 }
 
-.board-rev3 {
+.gpios-board-rev3 {
     width: 665px;
     background-color: #008500;
     padding-top: 38px;
@@ -28,7 +28,7 @@
     height:64px;
 }
 
-.pin-board-rev1, .pin-board-rev2 {
+.gpios-pin-board-rev1, .gpios-pin-board-rev2 {
     width: 404px;
     height: 64px;
     float: right;
@@ -36,7 +36,7 @@
     border-radius: 5px;
 }
 
-.pin-board-rev3 {
+.gpios-pin-board-rev3 {
     width: 622px;
     height: 64px;
     float: right;
@@ -45,7 +45,7 @@
 }
 
 /* overlay */
-.pin-board-readonly {
+.gpios-pin-board-readonly {
     background: white;
     opacity: 0.35;
     width: 100%;
@@ -57,7 +57,7 @@
     z-index: 1;
 }
 
-.default-pin {
+.gpios-default-pin {
     border: 5px solid #C0C0C0;
     width: 17px;
     height: 14px;
@@ -71,37 +71,37 @@
     padding-top: 3px;
 }
 
-.pin-5v {
+.gpios-pin-5v {
     background-color: #F44336 !important;
     border: 5px solid #F44336 !important;
     cursor: not-allowed;
 }
 
-.pin-33v {
+.gpios-pin-33v {
     background-color: #F44336 !important;
     border: 5px solid #F44336 !important;
     cursor: not-allowed;
 }
 
-.pin-dnc {
+.gpios-pin-dnc {
     background-color: #D9DDDE !important;
     border: 5px solid #D9DDDE !important;
     cursor: not-allowed;
 }
 
-.pin-gnd {
+.gpios-pin-gnd {
     background-color: black !important;
     border: 5px solid black !important;
     cursor: not-allowed;
 }
 
-.pin-gpio {
+.gpios-pin-gpio {
     background-color: #E0E0E0 !important;
     border: 5px solid #FFC107 !important;
     cursor: pointer;
 }
 
-.pin-assigned {
+.gpios-pin-assigned {
     background-color: #673AB7 !important;
     border: 5px solid #673AB7 !important;
     cursor: not-allowed;
