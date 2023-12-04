@@ -39,7 +39,7 @@
             "footer": [
                 {
                     "type": "text",
-                    "icon": "cog-outline",
+                    "icon": "cog",
                     "attr": "subtype",
                     "tooltip": "Gpio mode"
                 }
