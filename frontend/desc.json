@@ -17,7 +17,7 @@
                 {
                     "icon": "circle",
                     "condition": {
-                        "variable": "device.on",
+                        "attr": "on",
                         "operator": "===",
                         "value": "true"
                     }
@@ -25,7 +25,7 @@
                 {
                     "icon": "circle-outline",
                     "condition": {
-                        "variable": "device.on",
+                        "attr": "on",
                         "operator": "===",
                         "value": "false"
                     }
