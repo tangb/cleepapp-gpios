@@ -305,7 +305,7 @@ angular
         ctrl.searchNextGpioToConfigure = function() {
             var found = false;
             for (let i=0; i<ctrl.selectedGpios.length; i++) {
-                if (ctrl.selectedGpios[i].gpio === null) {
+                if (!ctrl.selectedGpios[i].gpio) {
                     ctrl.currentIndex = i;
                     ctrl.currentLabel = ctrl.selectedGpios[ctrl.currentIndex].label;
                     found = true;
