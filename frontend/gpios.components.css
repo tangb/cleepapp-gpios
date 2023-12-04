@@ -58,9 +58,9 @@
 }
 
 .gpios-default-pin {
-    border: 5px solid #C0C0C0;
-    width: 17px;
-    height: 14px;
+    border: 3px solid #C0C0C0;
+    width: 21px;
+    height: 16px;
     position: relative;
     float: left;
     border-radius: 50%;
@@ -68,42 +68,42 @@
     background-color: #C0C0C0;
     font-size: 10px;
     text-align: center;
-    padding-top: 3px;
+    padding-top: 5px;
 }
 
 .gpios-pin-5v {
     background-color: #F44336 !important;
-    border: 5px solid #F44336 !important;
+    border: 3px solid #F44336 !important;
     cursor: not-allowed;
 }
 
 .gpios-pin-33v {
     background-color: #F44336 !important;
-    border: 5px solid #F44336 !important;
+    border: 3px solid #F44336 !important;
     cursor: not-allowed;
 }
 
 .gpios-pin-dnc {
-    background-color: #D9DDDE !important;
-    border: 5px solid #D9DDDE !important;
+    background-color: #6633CC !important;
+    border: 3px solid #6633CC !important;
     cursor: not-allowed;
 }
 
 .gpios-pin-gnd {
     background-color: black !important;
-    border: 5px solid black !important;
+    border: 3px solid black !important;
     cursor: not-allowed;
 }
 
 .gpios-pin-gpio {
     background-color: #E0E0E0 !important;
-    border: 5px solid #FFC107 !important;
+    border: 3px solid #A9A9A9 !important;
     cursor: pointer;
 }
 
 .gpios-pin-assigned {
-    background-color: #673AB7 !important;
-    border: 5px solid #673AB7 !important;
+    background-color: #6666CC !important;
+    border: 3px solid #6666CC !important;
     cursor: not-allowed;
 }
 
