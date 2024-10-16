@@ -13,29 +13,35 @@
             "header": {
                 "icon": "video-input-component"
             },
-            "content": [
-                {
-                    "icon": "circle",
-                    "condition": {
-                        "attr": "on",
-                        "operator": "===",
-                        "value": "true"
-                    }
+            "content": {
+                "layout": {
+                    "align": "center center"
                 },
-                {
-                    "icon": "circle-outline",
-                    "condition": {
+                "items": [
+                    {
+                        "icon": "circle",
+                        "style": "md-accent icon-lg",
+                        "condition": {
+                            "attr": "on",
+                            "operator": "===",
+                            "value": true
+                        }
+                    },
+                    {
+                        "icon": "circle-outline",
+                        "condition": {
+                            "attr": "on",
+                            "operator": "===",
+                            "value": false
+                        }
+                    },
+                    {
                         "attr": "on",
-                        "operator": "===",
-                        "value": "false"
+                        "trueLabel": "ON",
+                        "falseLabel": "OFF"
                     }
-                },
-                {
-                    "attr": "on",
-                    "trueLabel": "ON",
-                    "falseLabel": "OFF"
-                }
-            ],
+                ]
+            },
             "footer": [
                 {
                     "type": "text",

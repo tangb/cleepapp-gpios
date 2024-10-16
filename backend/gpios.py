@@ -54,7 +54,7 @@ class GpioInputWatcher(Thread):
 
         Args:
             pin (int): gpio pin number
-            uuid (string): device uuid
+            uuid (str): device uuid
             on_callback (function): on callback
             off_callback (function): off callback
             level (RPi.GPIO.LOW|RPi.GPIO.HIGH): triggered level
@@ -168,7 +168,7 @@ class Gpios(CleepModule):
     """
 
     MODULE_AUTHOR = "Cleep"
-    MODULE_VERSION = "1.1.3"
+    MODULE_VERSION = "1.2.0"
     MODULE_DEPS = []
     MODULE_DESCRIPTION = "Configure your raspberry pins"
     MODULE_LONGDESCRIPTION = "Gives you access to raspberry pins to configure your inputs/ouputs as you wish quickly and easily."
@@ -639,7 +639,14 @@ class Gpios(CleepModule):
             dict: dict of pins::
 
                 {
-                    <pin number (int)>:<gpio name|5v|3.3v|gnd|dnc(string)>
+                    pin (int): {
+                        label (str): Gpio label ("GPIOX"|"5v"|"3.3v"|"gnd"|"dnc"),
+                        gpio (dict): {
+                            assigned (bool): True if gpio assigned,
+                            owner (str): gpio application owner or None,
+                        }
+                    },
+                    ...
                 }
 
         """
@@ -684,7 +691,10 @@ class Gpios(CleepModule):
         Return assigned gpios
 
         Returns:
-            list: list of gpios
+            list: List of gpios::
+
+                [ "GPIO3", "GPIO5", ... ]
+
         """
         return [device["gpio"] for _, device in self.get_module_devices().items()]
 
@@ -693,10 +703,12 @@ class Gpios(CleepModule):
         Return available GPIO pins according to board revision
 
         Returns:
-            dict of gpios::
+            dict: Dict of gpios::
 
                 {
-                    <gpio name>: <pin number>
+                    "GPIO1": 5,
+                    "GPIO1": 5,
+                    ...
                 }
 
         """
@@ -735,18 +747,31 @@ class Gpios(CleepModule):
         This action only flag this gpio as reserved to avoid using it again
 
         Args:
-            name (string): name of gpio
-            gpio (string) : gpio value
-            usage (string) : describe gpio usage
-            command_sender (string): command request sender (used to set gpio in readonly mode)
+            name (str): name of gpio
+            gpio (str) : gpio value
+            usage (str) : describe gpio usage
+            command_sender (str): command request sender (used to set gpio in readonly mode)
 
         Returns:
-            dict: Created gpio device
+            dict: Created gpio device::
+
+                {
+                    name (str): name of gpio
+                    mode (str): Gpio mode ("output"|"input")
+                    pin (number): Gpio pin number
+                    gpio (str): Gpio id (GPIOX)
+                    keep (bool): True if gpio value is stored in config and restored after reboot
+                    on (bool): True if gpio is on
+                    inverted (bool): Gpio has inverted state
+                    owner (str): Application that owns the gpio
+                    type (str): Always "gpio"
+                    subtype (str): Same value than mode
+                }
 
         Raises:
-            CommandError
-            MissingParameter
-            InvalidParameter
+            CommandError: Command failed
+            MissingParameter: Missing command parameter
+            InvalidParameter: Invalid command parameter
         """
         # fix command_sender: rpcserver is the default gpio entry point
         if command_sender == "rpcserver":
@@ -809,10 +834,20 @@ class Gpios(CleepModule):
         Return reserved gpios for specified usage
 
         Args:
-            usage (string): gpio reserved usage
+            usage (str): gpio reserved usage
 
         Returns:
-            list: list of reserved gpios (full data)
+            list: list of reserved gpios (full data)::
+
+                [
+                    {
+                        gpio: "GPIO1",
+                        pin: 1,
+                        ...
+                    },
+                    ...
+                ]
+
         """
         if usage is None or len(usage) == 0:
             raise MissingParameter('Parameter "usage" is missing')
@@ -825,7 +860,7 @@ class Gpios(CleepModule):
         Return True if gpio is reserved
 
         Args:
-            gpio (string): gpio
+            gpio (str): gpio
 
         Returns:
             bool: True if gpio is reserved, False otherwise
@@ -845,20 +880,33 @@ class Gpios(CleepModule):
         Add new gpio
 
         Args:
-            name: name of gpio
-            gpio: gpio value
-            mode: mode (input or output)
-            keep: keep state when restarting
-            inverted: if true a callback will be triggered on gpio low level instead of high level
-            command_sender: command request sender (used to set gpio in readonly mode)
+            name (str): name of gpio
+            gpio (str): selected gpio ("GPIOX")
+            mode (str): mode ("input"|"output")
+            keep (bool): keep state when restarting
+            inverted (bool): if true a callback will be triggered on gpio low level instead of high level
+            command_sender (str): command request sender (optional)
 
         Returns:
-            dict: created gpio device
+            dict: created gpio device ::
+
+                {
+                    name (str): name of gpio
+                    mode (str): Gpio mode ("output"|"input")
+                    pin (number): Gpio pin number
+                    gpio (str): Gpio id (GPIOX)
+                    keep (bool): True if gpio value is stored in config and restored after reboot
+                    on (bool): True if gpio is on
+                    inverted (bool): Gpio has inverted state
+                    owner (str): Application that owns the gpio
+                    type (str): Always "gpio"
+                    subtype (str): Same value than mode
+                }
 
         Raises:
-            CommandError
-            MissingParameter
-            InvalidParameter
+            CommandError: Command failed
+            MissingParameter: Missing command parameter
+            InvalidParameter: Invalid command parameter specified
         """
         # fix command_sender: rpcserver is the default gpio entry point
         if command_sender == "rpcserver":
@@ -888,7 +936,7 @@ class Gpios(CleepModule):
                         {
                             "validator": lambda val: self._search_device("gpio", gpio)
                             is None,
-                            "message": 'Gpio "%s" is already configured' % gpio,
+                            "message": 'Gpio "%s" is already used by other application' % gpio,
                         },
                     ],
                 },
@@ -932,17 +980,17 @@ class Gpios(CleepModule):
         Delete gpio
 
         Args:
-            uuid: device identifier
-            command_sender (string): command sender
+            device_uuid (str): device identifier
+            command_sender (str): command sender
 
         Returns:
             bool: True if device was deleted, False otherwise
 
         Raises:
-            CommandError
-            MissingParameter
-            Unauthorized
-            InvalidParameter
+            CommandError: Command failed
+            MissingParameter: Missing command parameter
+            Unauthorized: Command cannot be executed by application
+            InvalidParameter: Invalid command parameter
         """
         # fix command_sender: rpcserver is the default gpio entry point
         if command_sender == "rpcserver":
@@ -973,20 +1021,33 @@ class Gpios(CleepModule):
         Update gpio
 
         Args:
-            device_uuid (string): device identifier
-            name (string): gpio name
+            device_uuid (str): device identifier
+            name (str): gpio name
             keep (bool): keep status flag
             inverted (bool): inverted flag
-            command_sender (string): command sender
+            command_sender (str): command sender
 
         Returns:
-            dict: updated gpio device
+            dict: updated gpio device::
+
+                {
+                    name (str): name of gpio
+                    mode (str): Gpio mode ("output"|"input")
+                    pin (number): Gpio pin number
+                    gpio (str): Gpio id (GPIOX)
+                    keep (bool): True if gpio value is stored in config and restored after reboot
+                    on (bool): True if gpio is on
+                    inverted (bool): Gpio has inverted state
+                    owner (str): Application that owns the gpio
+                    type (str): Always "gpio"
+                    subtype (str): Same value than mode
+                }
 
         Raises:
-            CommandError
-            MissingParameter
-            Unauthorized
-            InvalidParameter
+            CommandError: Command failed
+            MissingParameter: Missing command parameter
+            Unauthorized: Command cannot be executed by application
+            InvalidParameter: Invalid command parameter
         """
         # fix command_sender: rpcserver is the default gpio entry point
         if command_sender == "rpcserver":
@@ -1024,13 +1085,13 @@ class Gpios(CleepModule):
         Turn on specified device
 
         Args:
-            device_uuid (string): device identifier
+            device_uuid (str): device identifier
 
         Returns:
             bool: True if command executed successfully
 
         Raises:
-            CommandError
+            CommandError: Command failed
         """
         # check values
         device = self._get_device(device_uuid)
@@ -1063,13 +1124,13 @@ class Gpios(CleepModule):
         Turn off specified device
 
         Args:
-            device_uuid (string): device identifier
+            device_uuid (str): device identifier
 
         Returns:
             bool: True if command executed successfully
 
         Raises:
-            CommandError
+            CommandError: Command failed
         """
         device = self._get_device(device_uuid)
         if device is None:
@@ -1102,13 +1163,13 @@ class Gpios(CleepModule):
         Return gpio status (on or off)
 
         Args:
-            device_uuid (string): device identifier
+            device_uuid (str): device identifier
 
         Returns:
             bool: True if device is on, False if device is off
 
         Raises:
-            CommandError
+            CommandError: Command failed
         """
         # check values
         device = self._get_device(device_uuid)
@@ -1127,9 +1188,9 @@ class Gpios(CleepModule):
         Get value of specified gpio. Gpio doesn't have to be declared as device
 
         Args:
-            gpio (string): gpio name
+            gpio (str): gpio name
 
-        Return:
+        Returns:
             bool: True if gpio is on, False otherwise
         """
         # check values

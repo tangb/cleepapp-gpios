@@ -1,3 +1,24 @@
+/**
+ * config-gpios-pins component
+ * Allow user to friendly select gpios
+ *
+ * Params:
+ *  - selected-gpios (array): Gpios user selection. Provided value must be an array of gpios with custom label.
+ *                            Selected gpio is filled in gpio attribute.
+ *
+ *                            Ex: [ { gpio: undefined, label: 'sensor pin1' }, { gpio: 'GPIO12', label: 'sensor pin2'} ]
+ *
+ *                            You can see in above example 2nd gpio is pre-selected with GPIO12.
+ *                            Labels are displayed on component bottom (with automatic color) to help user.
+ *
+ *  - readonly (bool): enable readonly mode (user can't select a gpio)
+ *
+ * Events:
+ *  - refresh-gpios: broadcast 'refresh-gpios' event to force component updating (used gpios). Useful when you delete
+ *                   a device with gpios that are freed. No event parameters are required.
+ *
+ *                   Ex: $scope.$broadcast('refresh-gpios');
+ */
 angular
 .module('Cleep')
 .component('configGpiosPins', {
@@ -27,7 +48,7 @@ angular
                         <div
                             ng-click="$ctrl.onClick(pin)" style="background-color: {{ pin.color }} !important;"
                             class="gpios-default-pin"
-                            ng-repeat="pin in $ctrl.odds"
+                            ng-repeat="pin in $ctrl.odds track by $index"
                             ng-class="{'gpios-pin-dnc':pin.dnc, 'gpios-pin-5v':pin.v5, 'gpios-pin-33v':pin.v33, 'gpios-pin-gnd':pin.gnd, 'gpios-pin-assigned':pin.assigned, 'gpios-pin-selected':pin.selected, 'gpios-pin-gpio':pin.gpio}"
                         >
                             <md-tooltip ng-if="pin.v33" md-direction="top">Pin#{{ pin.pin }} +3.3v</md-tooltip>
@@ -43,7 +64,7 @@ angular
                             ng-click="$ctrl.onClick(pin)"
                             style="background-color: {{pin.color}} !important;"
                             class="gpios-default-pin"
-                            ng-repeat="pin in $ctrl.evens"
+                            ng-repeat="pin in $ctrl.evens track by $index"
                             ng-class="{'gpios-pin-dnc':pin.dnc, 'gpios-pin-5v':pin.v5, 'gpios-pin-33v':pin.v33, 'gpios-pin-gnd':pin.gnd, 'gpios-pin-assigned':pin.assigned, 'gpios-pin-selected':pin.selected, 'gpios-pin-gpio':pin.gpio}"
                         >
                             <md-tooltip ng-if="pin.v33" md-direction="bottom">Pin#{{ pin.pin }} +3.3v</md-tooltip>
@@ -57,7 +78,7 @@ angular
                         </div>
                     </div>
                 </div>
-    
+
                 <div layout="row">
                     <div ng-repeat="info in $ctrl.pinInfos" layout="row">
                         <div style="background-color:{{ info.color }}; width:15px; height:15px; border-radius:50%; margin-right:5px;"></div>
@@ -80,7 +101,7 @@ angular
         selectedGpios: '<',
         readonly: '<?',
     },
-    controller: function (gpiosService, cleepService) {
+    controller: function (gpiosService, cleepService, $scope) {
         const ctrl = this;
         ctrl.countPins = 0;
         ctrl.selectedPins = {};
@@ -98,65 +119,84 @@ angular
                 .then((config)=> {
                     ctrl.boardRevision = config.revision;
                 });
-            gpiosService.getPinsUsage()
-                .then(function(pins) {
-                    for( pinNumber in pins.data ) {
-                        if( pinNumber % 2 ) {
-                            ctrl.__fillOdds(pinNumber, pins.data[pinNumber]);
-                        } else {
-                            ctrl.__fillEvens(pinNumber, pins.data[pinNumber]);
-                        }
-                    }
-                    ctrl.evens.reverse();
-                    ctrl.odds.reverse();
-                });
         };
 
         ctrl.$onChanges = function (changes) {
             if (changes.selectedGpios?.currentValue) {
                 ctrl.maxPins = changes.selectedGpios.currentValue.length;
-                ctrl.prepareComponent();
+                ctrl.updatePinsUsage().then(() => ctrl.prepareComponent());
             }
         };
 
+        $scope.$on('refresh-gpios', () => {
+            ctrl.updatePinsUsage().then(() => ctrl.prepareComponent());
+        });
+
+        ctrl.updatePinsUsage = function () {
+            return gpiosService.getPinsUsage()
+                .then(function(pins) {
+                    const evens = [];
+                    const odds = [];
+
+                    for( pinNumber in pins.data ) {
+                        if( pinNumber % 2 ) {
+                            ctrl.__fillGpios(evens, pinNumber, pins.data[pinNumber]);
+                        } else {
+                            ctrl.__fillGpios(odds, pinNumber, pins.data[pinNumber]);
+                        }
+                    }
+                    evens.reverse();
+                    odds.reverse();
+
+                    ctrl.evens = evens;
+                    ctrl.odds = odds;
+                    ctrl.currentIndex = -1;
+                    ctrl.selectedPins = {};
+                });
+        };
+
         ctrl.prepareComponent = function () {
+            const pinInfos = [];
             for (const [index, selectedGpio] of ctrl.selectedGpios.entries()) {
                 if (selectedGpio.gpio) {
-                    // set pin is already attributed to
+                    // set pin that is already configured
                     ctrl.selectedPins[selectedGpio.gpio] = null;
                     ctrl.countPins++;
                 }
 
                 // add infos for pin
-                ctrl.pinInfos.push({
+                pinInfos.push({
                     label: selectedGpio.label,
                     color: ctrl.colors[index],
                 });
             }
+
+            ctrl.countPins = 0;
+            ctrl.pinInfos = pinInfos;
             ctrl.searchNextGpioToConfigure();
         };
 
         ctrl.onClick = function(pin) {
-            if (ctrl.readonly) { 
+            if (ctrl.readonly) {
                 return;
-            }   
+            }
 
-            if (pin.gpio && !pin.assigned) { 
-                if (pin.selected) { 
+            if (pin.gpio && !pin.assigned) {
+                if (pin.selected) {
                     // unselect pin
-    
+
                     // delete entry in selected pin list
-                    if (pin.pin in ctrl.selectedPins) { 
+                    if (pin.pin in ctrl.selectedPins) {
                         delete ctrl.selectedPins[pin.pin];
-                    }   
+                    }
 
                     // remove configuration in component parameter
-                    for (let i=0; i<ctrl.selectedGpios.length; i++) { 
-                        if (ctrl.selectedGpios[i].gpio === pin.name) { 
+                    for (let i=0; i<ctrl.selectedGpios.length; i++) {
+                        if (ctrl.selectedGpios[i].gpio === pin.name) {
                             ctrl.selectedGpios[i].gpio = null;
                             break;
-                        }   
-                    }   
+                        }
+                    }
 
                     // unselect pin in widget
                     pin.selected = !pin.selected;
@@ -168,9 +208,9 @@ angular
                     ctrl.countPins--;
                 } else {
                     // select pin
-    
+
                     // is max number of selected pins already reached?
-                    if (ctrl.countPins < ctrl.maxPins) { 
+                    if (ctrl.countPins < ctrl.maxPins) {
                         // max not reached yet
                         // add new entry in selected pin list
                         ctrl.selectedPins[pin.pin] = null;
@@ -239,62 +279,29 @@ angular
         };
 
         /**
-         * Fill odd pins line
-         * @param pin: pin number
-         * @param pinDesc: pin description (gpio name if pin is a gpio)
-         * @param gpios: list of raspberry pi gpios
+         * Fill specified accumulator with pins configs
          */
-        ctrl.__fillOdds = function(pinNumber, pinData) {
+        ctrl.__fillGpios = function(acc, pinNumber, pinData) {
             if (pinData.label.startsWith('GPIO')) {
                 // save gpio configuration
                 const data = ctrl.__getPinData(pinNumber, true, false, false, false, false, pinData.gpio.assigned, pinData.gpio.owner, pinData.label);
-                ctrl.odds.push(data);
+                acc.push(data);
             } else if (pinData.label==='5V') {
                 // save 5v pin
                 const data = ctrl.__getPinData(pinNumber, false, true, false, false, false, null, null, null);
-                ctrl.odds.push(data);
+                acc.push(data);
             } else if (pinData.label==='3.3V') {
                 // save 3.3v pin
                 const data = ctrl.__getPinData(pinNumber, false, false, true, false, false, null, null, null);
-                ctrl.odds.push(data);
+                acc.push(data);
             } else if (pinData.label==='DNC') {
                 // save do not connect pin
                 const data = ctrl.__getPinData(pinNumber, false, false, false, true, false, null, null, null);
-                ctrl.odds.push(data);
+                acc.push(data);
             } else if (pinData.label==='GND') {
                 // save gnd pin
                 const data = ctrl.__getPinData(pinNumber, false, false, false, false, true, null, null, null);
-                ctrl.odds.push(data);
-            }
-        };
-
-       /**
-         * Fill even pins line
-         * @param pin: pin number
-         * @param pinDesc: pin description (gpio name if pin is a gpio)
-         * @param gpios: list of raspberry pi gpios
-         */
-        ctrl.__fillEvens = function(pinNumber, pinData) {
-            if (pinData.label.startsWith('GPIO')) {
-                // save gpio configuration
-                const data = ctrl.__getPinData(pinNumber, true, false, false, false, false, pinData.gpio.assigned, pinData.gpio.owner, pinData.label);
-                ctrl.evens.push(data);
-            } else if (pinData.label==='5V') {
-                // save 5v pin
-                const data = ctrl.__getPinData(pinNumber, false, true, false, false, false, null, null, null);
-                ctrl.evens.push(data);
-            } else if (pinData.label==='3.3V') {
-                // save 3.3v pin
-                const data = ctrl.__getPinData(pinNumber, false, false, true, false, false, null, null, null);
-                ctrl.evens.push(data);
-            } else if (pinData.label==='DNC') {
-                // save do not connect pin
-                const data = ctrl.__getPinData(pinNumber, false, false, false, true, false, null, null, null);
-                ctrl.evens.push(data);
-            } else if (pinData.label==='GND') {
-                // save gnd pin
-                const data = ctrl.__getPinData(pinNumber, false, false, false, false, true, null, null, null);
-                ctrl.evens.push(data);
+                acc.push(data);
             }
         };
 

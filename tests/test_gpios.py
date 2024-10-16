@@ -1,3 +1,4 @@
+from cleep.libs.tests import session
 import unittest
 import logging
 import time
@@ -8,9 +9,8 @@ from backend.gpios import Gpios, GpioInputWatcher
 from backend.gpiosgpioonevent import GpiosGpioOnEvent
 from backend.gpiosgpiooffevent import GpiosGpioOffEvent
 from cleep.exception import InvalidParameter, MissingParameter, CommandError, Unauthorized
-from cleep.libs.tests import session
 import RPi.GPIO as GPIO
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 class TestGpioInputWatcher(unittest.TestCase):
 
@@ -100,8 +100,8 @@ class TestGpios(unittest.TestCase):
     def tearDown(self):
         self.session.clean()
 
-    def init(self, start=True):
-        self.module = self.session.setup(Gpios)
+    def init(self, start=True, mock_on_start=True, mock_on_stop=True):
+        self.module = self.session.setup(Gpios, mock_on_start=mock_on_start, mock_on_stop=mock_on_stop)
 
         if start:
             self.session.start_module(self.module)
@@ -133,7 +133,7 @@ class TestGpios(unittest.TestCase):
         })
 
     def test_configure(self):
-        self.init(start=False)
+        self.init(start=False, mock_on_start=False)
         devices = {
             '123-456-789': {
                 'name': 'device1'
@@ -701,7 +701,7 @@ class TestGpios(unittest.TestCase):
 
         with self.assertRaises(InvalidParameter) as cm:
             self.module.add_gpio(data['name'], 'GPIO19', 'input', False, False, 'test')
-        self.assertEqual(str(cm.exception), 'Gpio "GPIO19" is already configured')
+        self.assertEqual(str(cm.exception), 'Gpio "GPIO19" is already used by other application')
 
     def test_add_gpio_fix_owner(self):
         self.init()

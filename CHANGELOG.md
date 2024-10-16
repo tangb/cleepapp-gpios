@@ -1,6 +1,6 @@
 # Changelog
 
-## [UNRELEASED] - xxx
+## [1.2.0] - 2024-10-16
 ### Changed
 - Migrate to Cleep components
 
